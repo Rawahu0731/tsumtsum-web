@@ -221,10 +221,48 @@ input[type="number"]:focus {
 }
 
 .item-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-  gap: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
   margin-top: 1rem;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+/* Desktop: stack into a single column and stretch buttons full width */
+@media (min-width: 641px) {
+  /* Desktop: arrange 6 buttons in a single row */
+  .item-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 0.75rem;
+    align-items: stretch;
+    justify-items: stretch;
+    width: 100%;
+  }
+  .item-checkbox {
+    width: 100%;
+    justify-content: center;
+    padding: 1rem 1.25rem;
+    min-height: 64px;
+    font-size: 1rem;
+  }
+}
+
+/* Mobile: 3 columns x rows to fill space (approx 3x2 for six buttons) */
+@media (max-width: 640px) {
+  .item-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+  }
+  .item-checkbox {
+    width: 100%;
+    padding: 0.85rem;
+    min-height: 56px;
+    font-size: 0.95rem;
+  }
 }
 
 .item-checkbox {

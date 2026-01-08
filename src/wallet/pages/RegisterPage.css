@@ -54,6 +54,7 @@
     border: 1px solid #e5e7eb;
     border-radius: 10px;
     background: #f9fafb;
+    color: #111827;
     transition: all 0.2s ease;
     box-sizing: border-box;
 }
@@ -70,6 +71,30 @@
     font-weight: 600;
     text-align: center;
     padding: 16px;
+}
+
+/* Ensure date inputs display correctly on mobile and don't overflow */
+input[type="date"].form-input,
+input[type="date"] {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    color: #111827;
+    background: #f9fafb;
+    padding: 10px 12px;
+    max-width: 100%;
+}
+
+/* Prevent internal picker indicator from causing overflow */
+input[type="date"]::-webkit-calendar-picker-indicator {
+    right: 8px;
+    opacity: 0.8;
+}
+
+/* Make sure form groups don't allow children to overflow the card */
+.form-group {
+    margin-bottom: 24px;
+    overflow: hidden;
 }
 
 /* モード選択 */
