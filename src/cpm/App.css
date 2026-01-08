@@ -1,0 +1,388 @@
+/* Layout */
+#root {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 4rem 2rem;
+}
+
+/* Header: Left aligned, Big Typography */
+.app-header {
+  margin-bottom: 4rem;
+  /* text-align: left; -> Default is left */
+}
+
+.app-header h1 {
+  font-size: 2.5rem;
+  color: var(--c-text-primary);
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.04em;
+}
+
+.app-header .subtitle {
+  font-size: 1rem;
+  color: var(--c-text-tertiary);
+  font-weight: 500;
+}
+
+/* Nav Section: Minimal Text Links */
+.nav-bar {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 3rem;
+  border-bottom: 1px solid var(--c-border);
+  padding-bottom: 1rem;
+}
+
+.nav-bar button {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--c-text-secondary);
+  transition: color 0.2s ease;
+}
+
+.nav-bar button:hover {
+  color: var(--c-accent);
+}
+
+/* Cards: Solid, Sharp, Subtle Border */
+.card {
+  background: var(--c-bg-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-md);
+  padding: 2.5rem;
+  margin-bottom: 2rem;
+  /* No Shadow by default for clean look, or very subtle */
+  box-shadow: var(--shadow-sm);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+}
+
+.card-header h2 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--c-text-primary);
+}
+
+.data-count {
+  font-size: 0.75rem;
+  font-family: var(--font-mono);
+  color: var(--c-text-tertiary);
+  background: var(--c-bg-body);
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-sm);
+}
+
+/* Buttons: Solid & Outline */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: var(--radius-md);
+  transition: all 0.2s var(--ease-out);
+  height: 42px;
+}
+
+.btn-primary {
+  background-color: var(--c-accent);
+  color: var(--c-text-on-accent);
+}
+
+.btn-primary:hover {
+  background-color: var(--c-accent-hover);
+  transform: translateY(-1px);
+}
+
+.btn-outline {
+  border: 1px solid var(--c-border);
+  color: var(--c-text-primary);
+  background-color: transparent;
+}
+
+.btn-outline:hover {
+  border-color: var(--c-text-secondary);
+  background-color: var(--c-bg-body);
+}
+
+.btn-ghost {
+  color: var(--c-text-secondary);
+}
+
+.btn-ghost:hover {
+  color: var(--c-text-primary);
+  background-color: var(--c-bg-body);
+}
+
+.btn-danger {
+  color: var(--c-danger-text);
+  background-color: #fef2f2;
+}
+
+.btn-danger:hover {
+  background-color: #fee2e2;
+}
+
+/* Stopwatch: Technical & Large */
+.stopwatch-container {
+  text-align: center;
+  padding: 1rem 0;
+}
+
+.stopwatch-display {
+  font-family: var(--font-mono);
+  font-size: 5rem;
+  font-weight: 500;
+  color: var(--c-text-primary);
+  line-height: 1;
+  margin-bottom: 2rem;
+  letter-spacing: -0.05em;
+  font-variant-numeric: tabular-nums;
+}
+
+.stopwatch-display.running {
+  color: var(--c-accent);
+}
+
+.stopwatch-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.stopwatch-buttons button {
+  min-width: 120px;
+}
+
+/* Forms: Clean Inputs */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-field label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--c-text-secondary);
+}
+
+input[type="text"],
+input[type="number"] {
+  background: var(--c-bg-body);
+  border: 1px solid transparent;
+  /* No border initially for cleaner look, or subtle */
+  border-bottom: 1px solid var(--c-border);
+  /* Underline style? Or minimal box */
+  /* Let's go with minimal box */
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 1rem;
+  font-size: 0.938rem;
+  color: var(--c-text-primary);
+  transition: all 0.2s ease;
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus {
+  outline: none;
+  border-color: var(--c-accent);
+  background: var(--c-bg-surface);
+  box-shadow: 0 0 0 3px var(--c-accent-light);
+}
+
+/* Items Grid: Minimal Checkboxes */
+.item-section {
+  margin-top: 2.5rem;
+  padding-top: 2rem;
+  border-top: 1px dashed var(--c-border);
+}
+
+.item-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.item-checkbox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.item-checkbox:hover {
+  border-color: var(--c-text-tertiary);
+}
+
+.item-checkbox input {
+  display: none;
+  /* Hide default checkbox */
+}
+
+/* Custom state for checked item */
+.item-checkbox.checked {
+  background-color: var(--c-text-primary);
+  /* Black bg */
+  border-color: var(--c-text-primary);
+  color: var(--c-bg-surface);
+  /* White text */
+}
+
+/* Exception for specific items if needed, but monochrome is best */
+
+.item-checkbox span {
+  font-size: 0.813rem;
+  font-weight: 500;
+}
+
+/* Result Area: High Contrast */
+.result-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  /* Connected */
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  margin-bottom: 2rem;
+}
+
+.result-stat {
+  padding: 2rem;
+  text-align: center;
+  border-right: 1px solid var(--c-border);
+  background: var(--c-bg-body);
+}
+
+.result-stat:last-child {
+  border-right: none;
+}
+
+.result-stat-label {
+  font-size: 0.75rem;
+  color: var(--c-text-secondary);
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.result-stat-value {
+  font-size: 2rem;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--c-text-primary);
+}
+
+.result-stat-unit {
+  font-size: 0.75rem;
+  color: var(--c-text-tertiary);
+}
+
+/* Ranking Table: Clean List */
+.ranking-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ranking-table th {
+  text-align: left;
+  padding: 1rem 0;
+  border-bottom: 2px solid var(--c-border);
+  /* Thicker header line */
+  font-size: 0.75rem;
+  color: var(--c-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ranking-table td {
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--c-border);
+  font-size: 0.938rem;
+  color: var(--c-text-primary);
+}
+
+.ranking-table tr:hover td {
+  color: var(--c-accent);
+}
+
+/* Badges: Minimal Number */
+.rank-number {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  color: var(--c-text-tertiary);
+}
+
+/* Top 3 */
+.rank-number.top {
+  color: var(--c-text-primary);
+  font-weight: 700;
+}
+
+.item-tags {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.item-tag-text {
+  font-size: 0.75rem;
+  color: var(--c-text-secondary);
+}
+
+/* Utilities */
+.text-right {
+  text-align: right;
+}
+
+.mt-4 {
+  margin-top: 1rem;
+}
+
+.mb-4 {
+  margin-bottom: 1rem;
+}
+
+.w-full {
+  width: 100%;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  #root {
+    padding: 2rem 1rem;
+  }
+
+  .stopwatch-display {
+    font-size: 3.5rem;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .ranking-table {
+    display: block;
+    overflow-x: auto;
+  }
+}

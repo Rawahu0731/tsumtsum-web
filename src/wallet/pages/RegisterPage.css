@@ -1,0 +1,235 @@
+.register-page {
+    max-width: 480px;
+    margin: 0 auto;
+}
+
+.register-page__header {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.register-page__title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #111827;
+    margin: 0 0 8px;
+}
+
+.register-page__subtitle {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin: 0;
+}
+
+/* カード */
+.register-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e5e7eb;
+}
+
+/* フォームグループ */
+.form-group {
+    margin-bottom: 24px;
+}
+
+.form-group:last-child {
+    margin-bottom: 0;
+}
+
+.form-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 8px;
+}
+
+.form-input {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 1rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    background: #f9fafb;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: #2563eb;
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.form-input--large {
+    font-size: 1.5rem;
+    font-weight: 600;
+    text-align: center;
+    padding: 16px;
+}
+
+/* モード選択 */
+.mode-selector {
+    display: flex;
+    gap: 8px;
+}
+
+.mode-button {
+    flex: 1;
+    padding: 12px 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border: 2px solid #e5e7eb;
+    border-radius: 10px;
+    background: #fff;
+    color: #6b7280;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.mode-button:hover {
+    border-color: #d1d5db;
+    background: #f9fafb;
+}
+
+.mode-button--add.mode-button--active {
+    border-color: #10b981;
+    background: #ecfdf5;
+    color: #059669;
+}
+
+.mode-button--premium.mode-button--active {
+    border-color: #8b5cf6;
+    background: #f5f3ff;
+    color: #7c3aed;
+}
+
+.mode-button--other.mode-button--active {
+    border-color: #f59e0b;
+    background: #fffbeb;
+    color: #d97706;
+}
+
+/* セレボ */
+.mode-button--serebo.mode-button--active {
+    border-color: #06b6d4;
+    background: #ecfeff;
+    color: #0ea5b0;
+}
+
+/* ピック */
+.mode-button--pick.mode-button--active {
+    border-color: #ef4444;
+    background: #fff1f2;
+    color: #dc2626;
+}
+
+/* 前回コイン情報 */
+.last-coin-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: #f3f4f6;
+    border-radius: 10px;
+    margin-bottom: 24px;
+}
+
+.last-coin-info__label {
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+.last-coin-info__value {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #111827;
+}
+
+/* 登録ボタン */
+.submit-button {
+    width: 100%;
+    padding: 16px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #fff;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2), 0 2px 4px -1px rgba(37, 99, 235, 0.1);
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.submit-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.submit-button:active {
+    transform: translateY(0);
+}
+
+.submit-button:disabled {
+    background: #d1d5db;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* エラーメッセージ */
+.error-message {
+    padding: 12px 16px;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 10px;
+    color: #dc2626;
+    font-size: 0.875rem;
+    margin-bottom: 16px;
+}
+
+/* 成功メッセージ */
+.success-message {
+    padding: 12px 16px;
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    border-radius: 10px;
+    color: #059669;
+    font-size: 0.875rem;
+    margin-bottom: 16px;
+    text-align: center;
+}
+
+/* 差分プレビュー */
+.diff-preview {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    padding: 16px;
+    background: #f9fafb;
+    border-radius: 10px;
+    margin-bottom: 16px;
+}
+
+.diff-preview__value {
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.diff-preview__value--positive {
+    color: #10b981;
+}
+
+.diff-preview__value--negative {
+    color: #ef4444;
+}
+
+.diff-preview__label {
+    font-size: 0.875rem;
+    color: #6b7280;
+}

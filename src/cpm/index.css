@@ -1,0 +1,91 @@
+/* Pro Design System: Sharp & Timeless White */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  /* タイポグラフィ */
+  --font-sans: 'Inter', 'Noto Sans JP', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* カラーパレット: モノクローム + 1アクセント */
+  --c-bg-body: #f9f9f9;
+  --c-bg-surface: #ffffff;
+
+  --c-text-primary: #111827;
+  /* Almost Black */
+  --c-text-secondary: #6b7280;
+  /* Neutral Gray */
+  --c-text-tertiary: #9ca3af;
+  /* Light Gray */
+  --c-text-on-accent: #ffffff;
+
+  --c-border: #e5e7eb;
+  --c-border-hover: #d1d5db;
+
+  /* アクセント: Royal Blue */
+  --c-accent: #2563eb;
+  --c-accent-hover: #1d4ed8;
+  --c-accent-light: #eff6ff;
+  /* Very light blue for background tints */
+
+  /* 機能色 */
+  --c-danger: #ef4444;
+  --c-danger-text: #b91c1c;
+  --c-success: #10b981;
+
+  /* 形状 */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  /* Sharp but friendly */
+  --radius-lg: 8px;
+
+  /* シャドウ (極めて繊細に) */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+
+  /* トランジション */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background-color: var(--c-bg-body);
+  color: var(--c-text-primary);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin: 0;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  /* Just a touch tighter for modern feel */
+  line-height: 1.2;
+}
+
+button {
+  font-family: var(--font-sans);
+  cursor: pointer;
+  border: none;
+  background: none;
+  padding: 0;
+}
+
+input {
+  font-family: var(--font-sans);
+}
+
+/* ユーティリティ */
+.text-mono {
+  font-family: var(--font-mono);
+}
