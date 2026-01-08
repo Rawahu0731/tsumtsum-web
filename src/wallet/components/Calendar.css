@@ -187,3 +187,74 @@
         font-size: 0.5625rem;
     }
 }
+
+/* 追加: 小さい画面での表示改善 */
+@media (max-width: 640px) {
+    .calendar {
+        padding: 8px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .calendar__header {
+        margin-bottom: 12px;
+        gap: 8px;
+    }
+
+    .calendar__nav-button {
+        width: 32px;
+        height: 32px;
+    }
+
+    .calendar__weekdays {
+        grid-template-columns: repeat(7, 1fr);
+        gap: 2px;
+        margin-bottom: 6px;
+    }
+
+    .calendar__days {
+        grid-template-columns: repeat(7, 1fr);
+        gap: 2px;
+        grid-auto-rows: minmax(40px, auto);
+    }
+
+    .calendar__day {
+        aspect-ratio: auto;
+        min-height: 40px;
+        padding: 4px;
+        border-radius: 6px;
+    }
+
+    .calendar__day-number {
+        font-size: 0.625rem;
+        margin-bottom: 2px;
+    }
+
+    .calendar__day-stats {
+        font-size: 0.5rem;
+        gap: 1px;
+    }
+
+    .calendar__stat {
+        white-space: normal;
+        overflow-wrap: anywhere;
+        display: block;
+        line-height: 1;
+    }
+
+    /* Reduce icon/marker size to save space */
+    .calendar__stat-dot {
+        width: 3px;
+        height: 3px;
+    }
+
+    /* Slightly smaller nav and title */
+    .calendar__nav-button {
+        width: 30px;
+        height: 30px;
+    }
+
+    .calendar__title {
+        font-size: 1rem;
+    }
+}

@@ -212,8 +212,8 @@ function CpmMain() {
         <p className="subtitle">ツムツム コイン効率計算ツール</p>
       </header>
 
-        <nav className="nav-bar">
-          <button onClick={() => navigate('usage')}>Usage</button>
+      <nav className="nav-bar">
+        <button onClick={() => navigate('usage')}>Usage</button>
         <button onClick={handleExportJSON}>Export Data</button>
         <button onClick={handleImportClick}>Import JSON</button>
         <input ref={fileInputRef} type="file" accept="application/json" style={{ display: 'none' }} onChange={handleFileChange} />
@@ -247,22 +247,48 @@ function CpmMain() {
         <div className="form-row">
           <div className="form-field">
             <label>Character Name</label>
-            <input type='text' value={character} onChange={e => setCharacter(e.target.value)} placeholder="名称を入力..." />
+            <input
+              type='text'
+              value={character}
+              onChange={e => setCharacter(e.target.value)}
+              placeholder="名称を入力..."
+              style={{ fontSize: '16px' }} // prevent iOS zoom
+            />
           </div>
           <div className="form-field">
             <label>Skill Level</label>
-            <input type='number' value={skill} onChange={e => setSkill(Number(e.target.value))} min={1} max={6} />
+            <input
+              type='number'
+              value={skill}
+              onChange={e => setSkill(Number(e.target.value))}
+              min={1}
+              max={6}
+              style={{ fontSize: '16px' }}
+            />
           </div>
         </div>
 
         <div className="form-row">
           <div className="form-field">
             <label>Time (mm:ss)</label>
-            <input type='text' value={time} onChange={e => setTime(e.target.value)} pattern='^\d{2}:\d{2}$' placeholder="00:00" />
+            <input
+              type='text'
+              value={time}
+              onChange={e => setTime(e.target.value)}
+              pattern='^\d{2}:\d{2}$'
+              placeholder="00:00"
+              style={{ fontSize: '16px' }}
+            />
           </div>
           <div className="form-field">
             <label>Base Coin</label>
-            <input type='number' value={coins} onChange={e => setCoins(Number(e.target.value))} placeholder="0" />
+            <input
+              type='number'
+              value={coins}
+              onChange={e => setCoins(Number(e.target.value))}
+              placeholder="0"
+              style={{ fontSize: '16px' }}
+            />
           </div>
         </div>
 

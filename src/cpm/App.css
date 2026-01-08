@@ -5,6 +5,13 @@
   padding: 4rem 2rem;
 }
 
+@media (max-width: 640px) {
+  #root {
+    padding: 2rem 1.5rem;
+  }
+}
+
+
 /* Header: Left aligned, Big Typography */
 .app-header {
   margin-bottom: 4rem;
@@ -368,21 +375,82 @@ input[type="number"]:focus {
 }
 
 /* Responsive */
+/* Responsive */
 @media (max-width: 640px) {
   #root {
     padding: 2rem 1rem;
+    max-width: 100%;
+  }
+
+  .app-header {
+    margin-bottom: 2rem;
+  }
+
+  .app-header h1 {
+    font-size: 2rem;
+  }
+
+  .nav-bar {
+    gap: 1rem;
+    padding-bottom: 0.75rem;
+    margin-bottom: 2rem;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    /* Hide scrollbar */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .nav-bar::-webkit-scrollbar {
+    display: none;
   }
 
   .stopwatch-display {
     font-size: 3.5rem;
   }
 
+  .stopwatch-buttons {
+    flex-wrap: wrap;
+  }
+
+  .stopwatch-buttons button {
+    flex: 1;
+    min-width: 80px;
+  }
+
   .form-row {
     grid-template-columns: 1fr;
+    gap: 1.25rem;
   }
+
+  .card {
+    padding: 1.5rem;
+  }
+
+  .item-grid {
+    grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .item-checkbox {
+    padding: 0.625rem;
+  }
+
+  .result-stats {
+    display: flex;
+    /* Override grid if needed, or keep grid */
+    grid-template-columns: 1fr 1fr;
+    /* Keep 2 cols even on mobile */
+  }
+
+  /* If screen is VERY small, maybe stack results? 
+     For now, 2 cols is usually fine for stats. 
+  */
 
   .ranking-table {
     display: block;
     overflow-x: auto;
+    white-space: nowrap;
   }
 }
