@@ -1,4 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom';
+import { useEffect } from 'react';
 import './Layout.css';
 
 // アイコンコンポーネント
@@ -19,6 +20,35 @@ function StatsIcon({ className }: { className?: string }) {
 }
 
 export default function Layout() {
+    useEffect(() => {
+        const head = document.head;
+        let meta = head.querySelector('meta[name="viewport"]') as HTMLMetaElement | null;
+        let prevContent: string | null = null;
+        let created = false;
+
+        if (meta) {
+            prevContent = meta.getAttribute('content');
+            meta.setAttribute('content', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no');
+        } else {
+            meta = document.createElement('meta');
+            meta.setAttribute('name', 'viewport');
+            meta.setAttribute('content', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no');
+            head.appendChild(meta);
+            created = true;
+        }
+
+        return () => {
+            if (!meta) return;
+            if (created) {
+                head.removeChild(meta);
+            } else if (prevContent !== null) {
+                meta.setAttribute('content', prevContent);
+            } else {
+                meta.removeAttribute('content');
+            }
+        };
+    }, []);
+
     return (
         <div className="layout">
             {/* PC Header */}

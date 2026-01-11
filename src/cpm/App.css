@@ -361,6 +361,16 @@ input[type="number"]:focus {
   letter-spacing: 0.05em;
 }
 
+/* Right-align header cells that correspond to numeric columns */
+.ranking-table th.text-right {
+  text-align: right;
+}
+
+/* Explicit left-align helper to override utilities when needed */
+.text-left {
+  text-align: left !important;
+}
+
 .ranking-table td {
   padding: 1rem 0;
   border-bottom: 1px solid var(--c-border);
@@ -487,8 +497,8 @@ input[type="number"]:focus {
   */
 
   .ranking-table {
-    display: block;
-    overflow-x: auto;
-    white-space: nowrap;
+    width: 100%;
+    /* Keep normal table layout to ensure header and columns align.
+       Overflow is handled by the wrapper div in the component. */
   }
 }

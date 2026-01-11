@@ -17,7 +17,7 @@ function CpmMain() {
   const [fivetofour, setFivetofour] = useState(true);
   const [character, setCharacter] = useState('');
   const [skill, setSkill] = useState(1);
-  const [entries, setEntries] = useState<Array<{ character: string; skill: number; cpm: number; ts: number; items: { score: boolean; coin: boolean; exp: boolean; timeItem: boolean; bomb: boolean; fivetofour: boolean } }>>([]);
+  const [entries, setEntries] = useState<Array<{ character: string; skill: number; cpm: number; ts: number; time?: string; coins?: number; items: { score: boolean; coin: boolean; exp: boolean; timeItem: boolean; bomb: boolean; fivetofour: boolean } }>>([]);
   const [importError, setImportError] = useState<string | null>(null);
   const [isOpening, setIsOpening] = useState(false);
 
@@ -51,6 +51,8 @@ function CpmMain() {
             skill: Number(e.skill || 1),
             cpm: Number(e.cpm || 0),
             ts: Number(e.ts || Date.now()),
+            time: String(e.time || '00:00'),
+            coins: Number(e.coins || e.coins === 0 ? e.coins : (e.coins === undefined ? 0 : Number(e.coins))),
             items: e.items || {
               score: !!e.score,
               coin: e.coin === undefined ? true : !!e.coin,
@@ -83,16 +85,33 @@ function CpmMain() {
     return names.length ? names : ['なし'];
   }
 
+  function itemsEqual(a: any, b: any) {
+    return !!a && !!b &&
+      Boolean(a.score) === Boolean(b.score) &&
+      Boolean(a.coin) === Boolean(b.coin) &&
+      Boolean(a.exp) === Boolean(b.exp) &&
+      Boolean(a.timeItem) === Boolean(b.timeItem) &&
+      Boolean(a.bomb) === Boolean(b.bomb) &&
+      Boolean(a.fivetofour) === Boolean(b.fivetofour);
+  }
+
   const aggregated = (() => {
-    const map = new Map<string, { character: string; skill: number; items: any; sum: number; count: number }>();
+    const map = new Map<string, { character: string; skill: number; items: any; sum: number; count: number; sumTimeSec: number; sumCoins: number }>();
     entries.forEach(e => {
       const key = `${e.character}::${e.skill}::${itemsKey(e.items)}`;
       const cur = map.get(key);
+      const timeParts = String(e.time || '00:00').split(':');
+      const minutes = Number(timeParts[0] || 0);
+      const seconds = Number(timeParts[1] || 0);
+      const totalSec = (Number.isFinite(minutes) ? minutes : 0) * 60 + (Number.isFinite(seconds) ? seconds : 0);
+      const coinsVal = Number(e.coins || 0);
       if (cur) {
         cur.sum += e.cpm;
         cur.count += 1;
+        cur.sumTimeSec += totalSec;
+        cur.sumCoins += coinsVal;
       } else {
-        map.set(key, { character: e.character, skill: e.skill, items: e.items, sum: e.cpm, count: 1 });
+        map.set(key, { character: e.character, skill: e.skill, items: e.items, sum: e.cpm, count: 1, sumTimeSec: totalSec, sumCoins: coinsVal });
       }
     });
     const arr = Array.from(map.values()).map(v => ({
@@ -101,6 +120,8 @@ function CpmMain() {
       items: v.items,
       avg: v.sum / v.count,
       count: v.count,
+      avgTimeSec: Math.round(v.sumTimeSec / v.count),
+      avgCoins: Math.round(v.sumCoins / v.count),
     }));
     arr.sort((a, b) => b.avg - a.avg);
     return arr;
@@ -130,7 +151,23 @@ function CpmMain() {
       window.alert('計算を実行してください');
       return;
     }
-    const entry = { character: character.trim(), skill, cpm: result, ts: Date.now(), items: { score, coin, exp, timeItem, bomb, fivetofour } };
+    const newItems = { score, coin, exp, timeItem, bomb, fivetofour };
+    // 重複チェック: character, skill, items, time, coins, cpm (小数2桁で比較)
+    const exists = entries.some(e =>
+      String(e.character || '').trim() === character.trim() &&
+      Number(e.skill) === Number(skill) &&
+      itemsEqual(e.items, newItems) &&
+      String(e.time || '') === String(time || '') &&
+      Number(e.coins || 0) === Number(coins || 0) &&
+      Math.abs(Number(e.cpm || 0) - Number(result)) < 0.01
+    );
+
+    if (exists) {
+      window.alert('同じ記録は既に登録されています');
+      return;
+    }
+
+    const entry = { character: character.trim(), skill, cpm: result, ts: Date.now(), time, coins, items: newItems };
     const next = [entry, ...entries];
     setEntries(next);
     saveEntriesToStorage(next);
@@ -168,12 +205,14 @@ function CpmMain() {
       const parsed = JSON.parse(text);
       if (!Array.isArray(parsed)) throw new Error('Invalid JSON format');
       const items: Array<any> = [];
-      parsed.forEach((it: any) => {
+        parsed.forEach((it: any) => {
         if (!it || typeof it !== 'object') return;
         const character = String(it.character || '');
         const skill = Number(it.skill || 1);
         const cpm = Number(it.cpm || 0);
         const ts = Number(it.ts || Date.now());
+        const timeVal = String(it.time || '00:00');
+        const coinsVal = Number(it.coins || (it.coins === 0 ? 0 : (it.coins === undefined ? 0 : Number(it.coins))));
         const itemsObj = it.items || {
           score: !!it.score,
           coin: it.coin === undefined ? true : !!it.coin,
@@ -182,7 +221,7 @@ function CpmMain() {
           bomb: !!it.bomb,
           fivetofour: it.fivetofour === undefined ? true : !!it.fivetofour,
         };
-        items.push({ character, skill, cpm, ts, items: itemsObj });
+        items.push({ character, skill, cpm, ts, time: timeVal, coins: coinsVal, items: itemsObj });
       });
       const map = new Map<number, any>();
       entries.forEach(e => map.set(e.ts, e));
@@ -363,27 +402,31 @@ function CpmMain() {
             <table className="ranking-table">
               <thead>
                 <tr>
-                  <th>#</th>
-                  <th>Character</th>
-                  <th>Skill</th>
-                  <th>Items</th>
-                  <th className="text-right">Avg (cpm)</th>
+                  <th className="text-left">RANK</th>
+                  <th className="text-left">Character</th>
+                  <th className="text-left">Skill</th>
+                  <th className="text-left">Items</th>
+                  <th className="text-right">Time</th>
+                  <th className="text-right">Coins</th>
+                  <th className="text-right">Coins/min</th>
                   <th className="text-right">Count</th>
                 </tr>
               </thead>
               <tbody>
                 {aggregated.map((r, i) => (
                   <tr key={`${r.character}-${r.skill}-${itemsKey(r.items)}`} onClick={() => { setCharacter(r.character); setSkill(r.skill); setScore(!!r.items.score); setCoin(!!r.items.coin); setExp(!!r.items.exp); setTimeItem(!!r.items.timeItem); setBomb(!!r.items.bomb); setFivetofour(!!r.items.fivetofour); }} style={{ cursor: 'pointer' }}>
-                    <td><span className={`rank-number ${i < 3 ? 'top' : ''}`}>{i + 1}</span></td>
-                    <td>{r.character}</td>
-                    <td>{r.skill}</td>
-                    <td>
+                    <td className="text-left"><span className={`rank-number ${i < 3 ? 'top' : ''}`}>{i + 1}</span></td>
+                    <td className="text-left">{r.character}</td>
+                    <td className="text-left">{r.skill}</td>
+                    <td className="text-left">
                       <div className="item-tags">
                         {itemsLabel(r.items).map((name, idx) => (
                           <span key={idx} className="item-tag-text">{name}</span>
                         ))}
                       </div>
                     </td>
+                    <td className="text-right text-mono">{`${Math.floor((r.avgTimeSec || 0) / 60)}:${String((r.avgTimeSec || 0) % 60).padStart(2, '0')}`}</td>
+                    <td className="text-right text-mono">{Number(r.avgCoins || 0).toFixed(0)}</td>
                     <td className="text-right text-mono">{r.avg.toFixed(0)}</td>
                     <td className="text-right text-mono">{r.count}</td>
                   </tr>
