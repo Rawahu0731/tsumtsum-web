@@ -17,6 +17,11 @@ export interface CoinRecord {
 export interface AppData {
     initialCoinAmount: number;
     records: CoinRecord[];
+    // ユーザー設定
+    settings?: {
+        dailyGoal?: number; // 1日あたりのコイン稼ぎ目標
+        showGoalLine?: boolean; // グラフに目標線を表示するか
+    };
 }
 
 export interface DailyStats {

@@ -71,6 +71,15 @@
   height: 18px;
 }
 
+.settings-button {
+  background: transparent;
+  border: 1px solid transparent;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.settings-button:hover { background: #f3f4f6; }
+
 /* Mobile Tab Bar */
 .tabbar {
   display: flex;

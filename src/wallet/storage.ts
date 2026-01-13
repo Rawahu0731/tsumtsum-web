@@ -22,6 +22,10 @@ export function initializeData(initialCoinAmount: number): AppData {
     const data: AppData = {
         initialCoinAmount,
         records: [],
+        settings: {
+            dailyGoal: 0,
+            showGoalLine: true,
+        },
     };
     saveData(data);
     return data;
@@ -143,6 +147,10 @@ export function importData(json: string): { success: true; data: AppData } | { s
         const data: AppData = {
             initialCoinAmount: parsed.initialCoinAmount,
             records: parsed.records,
+            settings: {
+                dailyGoal: typeof parsed.settings?.dailyGoal === 'number' ? parsed.settings.dailyGoal : 0,
+                showGoalLine: typeof parsed.settings?.showGoalLine === 'boolean' ? parsed.settings.showGoalLine : true,
+            },
         };
 
         saveData(data);

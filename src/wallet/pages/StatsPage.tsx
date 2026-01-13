@@ -127,6 +127,9 @@ export default function StatsPage() {
     useEffect(() => {
         const data = loadData();
         setAppData(data);
+        const onChange = () => setAppData(loadData());
+        window.addEventListener('tsumtsum-data-changed', onChange);
+        return () => window.removeEventListener('tsumtsum-data-changed', onChange);
     }, []);
 
     const records = appData?.records ?? [];
@@ -147,8 +150,9 @@ export default function StatsPage() {
 
     const chartData = useMemo(() => ({
         labels: last7.labels,
-        datasets: [
-            {
+        datasets: (() => {
+            const ds: any[] = [];
+            ds.push({
                 label: '獲得コイン',
                 data: last7.data,
                 fill: false,
@@ -156,8 +160,25 @@ export default function StatsPage() {
                 backgroundColor: '#10b981',
                 tension: 0.3,
                 pointRadius: 4,
-            },
-        ],
+            });
+
+            const goal = appData?.settings?.dailyGoal ?? 0;
+            const showGoal = appData?.settings?.showGoalLine ?? true;
+            if (showGoal && typeof goal === 'number' && goal > 0) {
+                ds.push({
+                    label: '目標',
+                    data: last7.labels.map(() => goal),
+                    borderColor: '#dc2626',
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    borderDash: [6, 4],
+                    fill: false,
+                    tension: 0,
+                });
+            }
+
+            return ds;
+        })(),
     }), [last7]);
 
     const chartOptions = useMemo(() => ({

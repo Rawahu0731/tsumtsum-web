@@ -1,6 +1,8 @@
 import { NavLink, Outlet } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import './Layout.css';
+import SettingsPanel from './SettingsPanel';
+import './SettingsPanel.css';
 
 // アイコンコンポーネント
 function RegisterIcon({ className }: { className?: string }) {
@@ -20,6 +22,7 @@ function StatsIcon({ className }: { className?: string }) {
 }
 
 export default function Layout() {
+    const [open, setOpen] = useState(false);
     useEffect(() => {
         const head = document.head;
         let meta = head.querySelector('meta[name="viewport"]') as HTMLMetaElement | null;
@@ -32,7 +35,6 @@ export default function Layout() {
         } else {
             meta = document.createElement('meta');
             meta.setAttribute('name', 'viewport');
-            meta.setAttribute('content', 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no');
             head.appendChild(meta);
             created = true;
         }
@@ -51,6 +53,9 @@ export default function Layout() {
 
     return (
         <div className="layout">
+            {/* Settings panel (overlay) */}
+            <SettingsPanel isOpen={open} onClose={() => setOpen(false)} />
+
             {/* PC Header */}
             <header className="header">
                 <div className="header__inner">
@@ -75,6 +80,16 @@ export default function Layout() {
                             統計
                         </NavLink>
                     </nav>
+
+                    {/* 右上の設定ボタン */}
+                    <div style={{ marginLeft: 12 }}>
+                        <button className="settings-button" onClick={() => setOpen(true)} aria-label="設定">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="20" height="20">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 15.5a3.5 3.5 0 100-7 3.5 3.5 0 000 7z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06A2 2 0 014.28 16.9l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82L4.31 4.7A2 2 0 017.14 1.87l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001 1.51V3a2 2 0 014 0v.09c.13.66.53 1.24 1 1.51h.12a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v.12c.27.47.85.87 1.51 1z" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
             </header>
 
@@ -107,3 +122,4 @@ export default function Layout() {
         </div>
     );
 }
+
