@@ -80,6 +80,27 @@
 }
 .settings-button:hover { background: #f3f4f6; }
 
+/* Mobile fixed settings button (top-right) */
+.settings-button--mobile {
+  position: fixed;
+  top: calc(12px + env(safe-area-inset-top));
+  right: 12px;
+  z-index: 500;
+  background: transparent;
+  border: 1px solid transparent;
+  padding: 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.settings-button--mobile:hover { background: #f3f4f6; }
+
+@media (min-width: 768px) {
+  .settings-button--mobile { display: none; }
+}
+
 /* Mobile Tab Bar */
 .tabbar {
   display: flex;
@@ -106,6 +127,13 @@
   transition: all 0.2s ease;
 }
 
+/* Make the same styles apply to buttons using this class */
+.tabbar__link[type="button"] {
+  appearance: none;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
 .tabbar__link--active {
   color: #2563eb;
 }
