@@ -359,29 +359,37 @@ export default function StatsPage() {
             {/* 直近7日間グラフ */}
             <section className="stats-section">
                 <h3 className="stats-section__title">直近7日間の獲得</h3>
-                    {(appData?.settings?.showGoalLine && (appData?.settings?.dailyGoal ?? 0) > 0) && (
-                    <div className="stats-section__goal">
-                        <div>目標: {formatNumber(appData!.settings!.dailyGoal ?? 0)} コイン</div>
-                        <div className={`stats-section__today ${remainingToday === 0 ? 'stats-section__today--done' : ''}`}>
-                            {remainingToday === 0 ? (
-                                <>
-                                    今日の目標は達成済みです（現在 {formatNumber(currentCoins)} コイン）
-                                </>
-                            ) : (
-                                <>
-                                    今日あと {formatNumber(remainingToday)} コインで目標達成
-                                    <div className="stats-section__target">現在 {formatNumber(currentCoins)} → 合計 {formatNumber(targetTotal)} コイン</div>
-                                </>
-                            )}
-                        </div>
-                    </div>
-                )}
+                    {/* 目標表示は専用セクションに移動しました */}
                 <div className="stats-card">
                     <div className="chart-container">
                         <Line data={chartData} options={chartOptions} />
                     </div>
                 </div>
             </section>
+
+                {/* 目標（専用セクション） */}
+                <section className="stats-section">
+                    <h3 className="stats-section__title">目標</h3>
+                    <div className="stats-card">
+                        {(appData?.settings?.showGoalLine && (appData?.settings?.dailyGoal ?? 0) > 0) ? (
+                            <div className="stats-section__goal">
+                                <div>目標: {formatNumber(appData!.settings!.dailyGoal ?? 0)} コイン</div>
+                                <div className={`stats-section__today ${remainingToday === 0 ? 'stats-section__today--done' : ''}`}>
+                                    {remainingToday === 0 ? (
+                                        <>今日の目標は達成済みです</>
+                                    ) : (
+                                        <>
+                                            今日あと {formatNumber(remainingToday)} コインで目標達成
+                                            <div className="stats-section__target">現在 {formatNumber(currentCoins)} → 合計 {formatNumber(targetTotal)} コイン</div>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="empty-state">目標が設定されていません。</div>
+                        )}
+                    </div>
+                </section>
 
             {/* 月別統計 */}
             {monthlyStats.length > 0 && (
