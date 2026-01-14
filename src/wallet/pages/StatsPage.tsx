@@ -12,7 +12,7 @@ import {
 } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import type { AppData, CoinRecord, PeriodStats } from '../types';
-import { loadData, exportData, importData } from '../storage';
+import { loadData, exportData, importData, getLastCoinAmount } from '../storage';
 import Calendar from '../components/Calendar';
 import './StatsPage.css';
 import { Line, Pie } from 'react-chartjs-2';
@@ -119,6 +119,8 @@ function formatNumber(num: number): string {
 
 export default function StatsPage() {
     const [appData, setAppData] = useState<AppData | null>(null);
+    const [showAllMonthly, setShowAllMonthly] = useState(false);
+    const [showAllWeekly, setShowAllWeekly] = useState(false);
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -147,6 +149,18 @@ export default function StatsPage() {
         });
         return { labels, data };
     }, [records]);
+
+    // 今日の獲得と目標までの残りを計算
+    const todayStats = useMemo(() => {
+        const key = format(new Date(), 'yyyy-MM-dd');
+        const earned = records.reduce((acc, r) => acc + (r.date === key ? r.earned : 0), 0);
+        return { key, earned };
+    }, [records]);
+
+    const remainingToday = Math.max(0, (appData?.settings?.dailyGoal ?? 0) - todayStats.earned);
+
+    const currentCoins = appData ? getLastCoinAmount(appData) : 0;
+    const targetTotal = currentCoins + remainingToday;
 
     const chartData = useMemo(() => ({
         labels: last7.labels,
@@ -202,6 +216,11 @@ export default function StatsPage() {
         const total = premium + serebo + pick + other;
         return { premium, serebo, pick, other, total };
     }, [records]);
+
+    // 表示件数制御（最新5件）
+    const displayedMonthly = showAllMonthly ? monthlyStats : monthlyStats.slice(0, 5);
+    const reversedWeekly = weeklyStats.slice().reverse();
+    const displayedWeekly = showAllWeekly ? reversedWeekly : reversedWeekly.slice(0, 5);
 
     const pieData = useMemo(() => ({
         labels: ['プレボ', 'セレボ', 'ピック', 'その他'],
@@ -340,6 +359,23 @@ export default function StatsPage() {
             {/* 直近7日間グラフ */}
             <section className="stats-section">
                 <h3 className="stats-section__title">直近7日間の獲得</h3>
+                    {(appData?.settings?.showGoalLine && (appData?.settings?.dailyGoal ?? 0) > 0) && (
+                    <div className="stats-section__goal">
+                        <div>目標: {formatNumber(appData!.settings!.dailyGoal ?? 0)} コイン</div>
+                        <div className={`stats-section__today ${remainingToday === 0 ? 'stats-section__today--done' : ''}`}>
+                            {remainingToday === 0 ? (
+                                <>
+                                    今日の目標は達成済みです（現在 {formatNumber(currentCoins)} コイン）
+                                </>
+                            ) : (
+                                <>
+                                    今日あと {formatNumber(remainingToday)} コインで目標達成
+                                    <div className="stats-section__target">現在 {formatNumber(currentCoins)} → 合計 {formatNumber(targetTotal)} コイン</div>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                )}
                 <div className="stats-card">
                     <div className="chart-container">
                         <Line data={chartData} options={chartOptions} />
@@ -364,7 +400,7 @@ export default function StatsPage() {
                                     </tr>
                             </thead>
                             <tbody>
-                                {monthlyStats.map((stats) => (
+                                {displayedMonthly.map((stats) => (
                                     <tr key={stats.startDate}>
                                         <td>{stats.label}</td>
                                         <td className="period-stats-table__earned">+{formatNumber(stats.earned)}</td>
@@ -377,6 +413,16 @@ export default function StatsPage() {
                             </tbody>
                         </table>
                     </div>
+                    {monthlyStats.length > 5 && (
+                        <div>
+                            <button
+                                className="stats-section__toggle stats-section__toggle--under"
+                                onClick={() => setShowAllMonthly((s) => !s)}
+                            >
+                                {showAllMonthly ? '閉じる' : 'もっと見る'}
+                            </button>
+                        </div>
+                    )}
                 </section>
             )}
 
@@ -397,7 +443,7 @@ export default function StatsPage() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {weeklyStats.slice().reverse().map((stats) => (
+                                {displayedWeekly.map((stats) => (
                                     <tr key={stats.startDate}>
                                         <td>{stats.label}</td>
                                         <td className="period-stats-table__earned">+{formatNumber(stats.earned)}</td>
@@ -410,6 +456,16 @@ export default function StatsPage() {
                             </tbody>
                         </table>
                     </div>
+                    {weeklyStats.length > 5 && (
+                        <div>
+                            <button
+                                className="stats-section__toggle stats-section__toggle--under"
+                                onClick={() => setShowAllWeekly((s) => !s)}
+                            >
+                                {showAllWeekly ? '閉じる' : 'もっと見る'}
+                            </button>
+                        </div>
+                    )}
                 </section>
             )}
 
