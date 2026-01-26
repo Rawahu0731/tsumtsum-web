@@ -19,7 +19,8 @@ export interface AppData {
     records: CoinRecord[];
     // ユーザー設定
     settings?: {
-        dailyGoal?: number; // 1日あたりのコイン稼ぎ目標
+        dailyGoal?: number; // 1日あたりのコイン稼ぎ目標（互換性用: 単一値）
+        dailyGoals?: number[]; // 曜日別目標（0=日,1=月,...6=土）
         showGoalLine?: boolean; // グラフに目標線を表示するか
     };
 }

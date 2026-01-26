@@ -6,6 +6,8 @@ import {
     initializeData,
     getLastCoinAmount,
     addRecord,
+    undoLastSessionRecord,
+    hasSessionUndo,
 } from '../storage';
 import './RegisterPage.css';
 
@@ -64,6 +66,32 @@ export default function RegisterPage() {
             setError(result.error);
         }
     }, [appData, date, mode, coinAmount]);
+
+    const handleUndo = useCallback(() => {
+        if (!appData) {
+            setError('データが存在しません。');
+            return;
+        }
+        if (!confirm('直前の操作を取り消します。よろしいですか？')) return;
+
+        const result = undoLastSessionRecord(appData);
+        if (result.success) {
+            setAppData(result.data);
+            setSuccess('直前の操作を取り消しました。');
+            setError('');
+            window.dispatchEvent(new CustomEvent('tsumtsum-data-changed'));
+            setTimeout(() => setSuccess(''), 3000);
+            setHasSessionUndoState(hasSessionUndo());
+        } else {
+            setError(result.error);
+        }
+    }, [appData]);
+
+    const [hasSessionUndoState, setHasSessionUndoState] = useState<boolean>(false);
+
+    useEffect(() => {
+        setHasSessionUndoState(hasSessionUndo());
+    }, [appData]);
 
     // 差分計算
     const lastCoin = appData ? getLastCoinAmount(appData) : 0;
@@ -213,6 +241,17 @@ export default function RegisterPage() {
                 >
                     登録する
                 </button>
+                {hasSessionUndoState && (
+                    <button
+                        type="button"
+                        className="submit-button submit-button--undo"
+                        onClick={handleUndo}
+                        aria-label="直前の登録を取り消す"
+                        style={{ marginTop: 8 }}
+                    >
+                        取り消す
+                    </button>
+                )}
             </div>
         </div>
     );

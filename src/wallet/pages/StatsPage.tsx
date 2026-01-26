@@ -143,11 +143,9 @@ export default function StatsPage() {
     const last7 = useMemo(() => {
         const days = eachDayOfInterval({ start: subDays(new Date(), 6), end: new Date() });
         const labels = days.map((d) => format(d, 'M/d', { locale: ja }));
-        const data = days.map((d) => {
-            const key = format(d, 'yyyy-MM-dd');
-            return records.reduce((acc, r) => acc + (r.date === key ? r.earned : 0), 0);
-        });
-        return { labels, data };
+        const keys = days.map((d) => format(d, 'yyyy-MM-dd'));
+        const data = keys.map((key) => records.reduce((acc, r) => acc + (r.date === key ? r.earned : 0), 0));
+        return { labels, data, keys };
     }, [records]);
 
     // 今日の獲得と目標までの残りを計算
@@ -157,31 +155,58 @@ export default function StatsPage() {
         return { key, earned };
     }, [records]);
 
-    const remainingToday = Math.max(0, (appData?.settings?.dailyGoal ?? 0) - todayStats.earned);
+    const getGoalForDate = useCallback((date: Date) => {
+        const dg = appData?.settings?.dailyGoals;
+        if (Array.isArray(dg) && dg.length === 7) {
+            return dg[date.getDay()] ?? 0;
+        }
+        return appData?.settings?.dailyGoal ?? 0;
+    }, [appData]);
+
+    const remainingToday = Math.max(0, getGoalForDate(new Date()) - todayStats.earned);
 
     const currentCoins = appData ? getLastCoinAmount(appData) : 0;
     const targetTotal = currentCoins + remainingToday;
 
-    const chartData = useMemo(() => ({
-        labels: last7.labels,
-        datasets: (() => {
-            const ds: any[] = [];
-            ds.push({
-                label: '獲得コイン',
-                data: last7.data,
-                fill: false,
-                borderColor: '#059669',
-                backgroundColor: '#10b981',
-                tension: 0.3,
-                pointRadius: 4,
-            });
+    const chartData = useMemo(() => {
+        const labels = last7.labels;
+        const data = last7.data;
 
-            const goal = appData?.settings?.dailyGoal ?? 0;
-            const showGoal = appData?.settings?.showGoalLine ?? true;
-            if (showGoal && typeof goal === 'number' && goal > 0) {
+        // 各日付に対する曜日別目標
+        const goalData = (last7.keys ?? []).map((k) => {
+            const d = parseISO(k);
+            return getGoalForDate(d) ?? 0;
+        });
+
+        // ポイントの色付け: 目標 > 0 の場合は達成なら緑、未達なら赤
+        const pointColors = data.map((v, i) => {
+            const goal = goalData[i] ?? 0;
+            if (typeof goal === 'number' && goal > 0) {
+                return v >= goal ? '#16a34a' : '#dc2626';
+            }
+            return '#10b981';
+        });
+
+        const ds: any[] = [];
+        ds.push({
+            label: '獲得コイン',
+            data,
+            fill: false,
+            borderColor: '#059669',
+            backgroundColor: '#10b981',
+            tension: 0.3,
+            pointRadius: 6,
+            pointBackgroundColor: pointColors,
+            pointBorderColor: pointColors,
+        });
+
+        const showGoal = appData?.settings?.showGoalLine ?? true;
+        if (showGoal) {
+            const hasAnyGoal = goalData.some((v) => typeof v === 'number' && v > 0);
+            if (hasAnyGoal) {
                 ds.push({
                     label: '目標',
-                    data: last7.labels.map(() => goal),
+                    data: goalData,
                     borderColor: '#dc2626',
                     borderWidth: 2,
                     pointRadius: 0,
@@ -190,10 +215,10 @@ export default function StatsPage() {
                     tension: 0,
                 });
             }
+        }
 
-            return ds;
-        })(),
-    }), [last7]);
+        return { labels, datasets: ds };
+    }, [last7, appData, getGoalForDate]);
 
     const chartOptions = useMemo(() => ({
         responsive: true,
@@ -495,7 +520,7 @@ export default function StatsPage() {
             <section className="stats-section">
                 <h3 className="stats-section__title">データ管理</h3>
                 <div className="stats-card">
-                    <div className="data-actions">
+                        <div className="data-actions">
                         <button className="data-button data-button--export" onClick={handleExport}>
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
@@ -511,6 +536,7 @@ export default function StatsPage() {
                             </svg>
                             インポート
                         </button>
+                        
                         <input
                             ref={fileInputRef}
                             type="file"

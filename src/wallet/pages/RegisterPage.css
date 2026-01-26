@@ -206,6 +206,30 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     box-shadow: none;
 }
 
+/* 取り消しボタン（小さく目立つ赤アウトライン） */
+.submit-button--undo {
+    width: auto;
+    padding: 8px 12px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #dc2626;
+    background: transparent;
+    border: 2px solid #fecaca;
+    border-radius: 10px;
+    cursor: pointer;
+    box-shadow: none;
+    display: inline-block;
+}
+
+.submit-button--undo:hover {
+    background: #fff1f2;
+    border-color: #fca5a5;
+}
+
+.submit-button--undo:active {
+    transform: translateY(0);
+}
+
 /* エラーメッセージ */
 .error-message {
     padding: 12px 16px;
