@@ -71,6 +71,12 @@ export function initializeData(initialCoinAmount: number): AppData {
             dailyGoal: 0,
             dailyGoals: [0, 0, 0, 0, 0, 0, 0],
             showGoalLine: true,
+            ocrCrop: {
+                left: 40,
+                top: 17,
+                right: 70,
+                bottom: 22,
+            },
         },
     };
     saveData(data);
@@ -205,6 +211,12 @@ export function importData(json: string): { success: true; data: AppData } | { s
                     ? parsed.settings.dailyGoals.map((v: any) => (typeof v === 'number' ? v : 0))
                     : undefined,
                 showGoalLine: typeof parsed.settings?.showGoalLine === 'boolean' ? parsed.settings.showGoalLine : true,
+                ocrCrop: {
+                    left: typeof parsed.settings?.ocrCrop?.left === 'number' ? parsed.settings.ocrCrop.left : 40,
+                    top: typeof parsed.settings?.ocrCrop?.top === 'number' ? parsed.settings.ocrCrop.top : 17,
+                    right: typeof parsed.settings?.ocrCrop?.right === 'number' ? parsed.settings.ocrCrop.right : 70,
+                    bottom: typeof parsed.settings?.ocrCrop?.bottom === 'number' ? parsed.settings.ocrCrop.bottom : 22,
+                },
             },
         };
 

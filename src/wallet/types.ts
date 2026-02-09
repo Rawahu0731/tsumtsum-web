@@ -22,6 +22,13 @@ export interface AppData {
         dailyGoal?: number; // 1日あたりのコイン稼ぎ目標（互換性用: 単一値）
         dailyGoals?: number[]; // 曜日別目標（0=日,1=月,...6=土）
         showGoalLine?: boolean; // グラフに目標線を表示するか
+        // OCR用のクロップ領域（割合、単位は％）。left/top/right/bottom の順で指定
+        ocrCrop?: {
+            left?: number;
+            top?: number;
+            right?: number;
+            bottom?: number;
+        };
     };
 }
 

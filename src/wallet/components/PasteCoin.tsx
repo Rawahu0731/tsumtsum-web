@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import ConfirmModal from './ConfirmModal';
+import { loadData } from '../storage';
 
 type Props = {
     onApply: (amount: number) => void;
@@ -63,11 +64,19 @@ export default function PasteCoin({ onApply }: Props) {
             const w = img.naturalWidth;
             const h = img.naturalHeight;
 
-            // Percentage bounds (always use ratios, no fixed pixels)
-            const sx = Math.floor(w * 0.40);
-            const sy = Math.floor(h * 0.17);
-            const sw = Math.floor(w * (0.70 - 0.40));
-            const sh = Math.floor(h * (0.22 - 0.17));
+            // Percentage bounds — read from saved settings (単位: %)
+            const data = loadData();
+            const crop = data?.settings?.ocrCrop ?? { left: 40, top: 17, right: 70, bottom: 22 };
+            const leftPct = Math.max(0, Math.min(100, Number(crop.left ?? 40)));
+            const topPct = Math.max(0, Math.min(100, Number(crop.top ?? 17)));
+            const rightPct = Math.max(0, Math.min(100, Number(crop.right ?? 70)));
+            const bottomPct = Math.max(0, Math.min(100, Number(crop.bottom ?? 22)));
+
+            // convert to pixel coordinates
+            const sx = Math.floor(w * (leftPct / 100));
+            const sy = Math.floor(h * (topPct / 100));
+            const sw = Math.floor(w * ((rightPct - leftPct) / 100));
+            const sh = Math.floor(h * ((bottomPct - topPct) / 100));
 
             const canvas = document.createElement('canvas');
             canvas.width = sw;

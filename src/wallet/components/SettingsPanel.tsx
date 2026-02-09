@@ -6,6 +6,10 @@ export default function SettingsPanel({ isOpen, onClose }: { isOpen: boolean; on
     const [dailyGoal, setDailyGoal] = useState<number>(0);
     const [dailyGoals, setDailyGoals] = useState<number[]>([0, 0, 0, 0, 0, 0, 0]);
     const [showGoalLine, setShowGoalLine] = useState<boolean>(true);
+    const [ocrLeft, setOcrLeft] = useState<number>(40);
+    const [ocrTop, setOcrTop] = useState<number>(17);
+    const [ocrRight, setOcrRight] = useState<number>(70);
+    const [ocrBottom, setOcrBottom] = useState<number>(22);
 
     useEffect(() => {
         const data = loadData();
@@ -18,6 +22,11 @@ export default function SettingsPanel({ isOpen, onClose }: { isOpen: boolean; on
                 // 互換性: 単一目標がある場合は全曜日に適用
                 setDailyGoals(Array(7).fill(data.settings.dailyGoal ?? 0));
             }
+            const crop = data.settings.ocrCrop;
+            setOcrLeft(crop?.left ?? 40);
+            setOcrTop(crop?.top ?? 17);
+            setOcrRight(crop?.right ?? 70);
+            setOcrBottom(crop?.bottom ?? 22);
         }
     }, [isOpen]);
 
@@ -27,6 +36,12 @@ export default function SettingsPanel({ isOpen, onClose }: { isOpen: boolean; on
             dailyGoal: Number(dailyGoal) || dailyGoals[new Date().getDay()] || 0,
             dailyGoals: dailyGoals.map((v) => Number(v) || 0),
             showGoalLine: !!showGoalLine,
+            ocrCrop: {
+                left: Number(ocrLeft) || 40,
+                top: Number(ocrTop) || 17,
+                right: Number(ocrRight) || 70,
+                bottom: Number(ocrBottom) || 22,
+            },
         };
         saveData(data);
         // notify other parts of app
@@ -71,6 +86,29 @@ export default function SettingsPanel({ isOpen, onClose }: { isOpen: boolean; on
                         onChange={(e) => setShowGoalLine(e.target.checked)}
                     />
                 </label>
+
+                <div className="settings-row">
+                    <div className="settings-row__label">画像OCRの切り取り（単位: %）</div>
+                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                        <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                            <div style={{ fontSize: 12 }}>Left</div>
+                            <input type="number" min={0} max={100} value={ocrLeft} onChange={(e) => setOcrLeft(Number(e.target.value) || 0)} />
+                        </label>
+                        <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                            <div style={{ fontSize: 12 }}>Top</div>
+                            <input type="number" min={0} max={100} value={ocrTop} onChange={(e) => setOcrTop(Number(e.target.value) || 0)} />
+                        </label>
+                        <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                            <div style={{ fontSize: 12 }}>Right</div>
+                            <input type="number" min={0} max={100} value={ocrRight} onChange={(e) => setOcrRight(Number(e.target.value) || 0)} />
+                        </label>
+                        <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                            <div style={{ fontSize: 12 }}>Bottom</div>
+                            <input type="number" min={0} max={100} value={ocrBottom} onChange={(e) => setOcrBottom(Number(e.target.value) || 0)} />
+                        </label>
+                    </div>
+                    <div style={{ marginTop: 6, fontSize: 12, color: '#6b7280' }}>例: Left=40, Top=17, Right=70, Bottom=22</div>
+                </div>
             </div>
 
             <div className="settings-panel__footer">
