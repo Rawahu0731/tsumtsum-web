@@ -163,7 +163,8 @@ export default function StatsPage() {
         return appData?.settings?.dailyGoal ?? 0;
     }, [appData]);
 
-    const remainingToday = Math.max(0, getGoalForDate(new Date()) - todayStats.earned);
+    const todayGoal = getGoalForDate(new Date());
+    const remainingToday = Math.max(0, todayGoal - todayStats.earned);
 
     const currentCoins = appData ? getLastCoinAmount(appData) : 0;
     const targetTotal = currentCoins + remainingToday;
@@ -396,9 +397,9 @@ export default function StatsPage() {
                 <section className="stats-section">
                     <h3 className="stats-section__title">目標</h3>
                     <div className="stats-card">
-                        {(appData?.settings?.showGoalLine && (appData?.settings?.dailyGoal ?? 0) > 0) ? (
+                        {(appData?.settings?.showGoalLine && (todayGoal ?? 0) > 0) ? (
                             <div className="stats-section__goal">
-                                <div>目標: {formatNumber(appData!.settings!.dailyGoal ?? 0)} コイン</div>
+                                <div>目標: {formatNumber(todayGoal ?? 0)} コイン</div>
                                 <div className={`stats-section__today ${remainingToday === 0 ? 'stats-section__today--done' : ''}`}>
                                     {remainingToday === 0 ? (
                                         <>今日の目標は達成済みです</>
