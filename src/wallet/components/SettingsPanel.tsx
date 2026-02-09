@@ -6,10 +6,10 @@ export default function SettingsPanel({ isOpen, onClose }: { isOpen: boolean; on
     const [dailyGoal, setDailyGoal] = useState<number>(0);
     const [dailyGoals, setDailyGoals] = useState<number[]>([0, 0, 0, 0, 0, 0, 0]);
     const [showGoalLine, setShowGoalLine] = useState<boolean>(true);
-    const [ocrLeft, setOcrLeft] = useState<number>(40);
+    const [ocrLeft, setOcrLeft] = useState<number>(50);
     const [ocrTop, setOcrTop] = useState<number>(17);
-    const [ocrRight, setOcrRight] = useState<number>(70);
-    const [ocrBottom, setOcrBottom] = useState<number>(22);
+    const [ocrRight, setOcrRight] = useState<number>(67);
+    const [ocrBottom, setOcrBottom] = useState<number>(20);
 
     useEffect(() => {
         const data = loadData();
@@ -23,10 +23,10 @@ export default function SettingsPanel({ isOpen, onClose }: { isOpen: boolean; on
                 setDailyGoals(Array(7).fill(data.settings.dailyGoal ?? 0));
             }
             const crop = data.settings.ocrCrop;
-            setOcrLeft(crop?.left ?? 40);
+            setOcrLeft(crop?.left ?? 50);
             setOcrTop(crop?.top ?? 17);
-            setOcrRight(crop?.right ?? 70);
-            setOcrBottom(crop?.bottom ?? 22);
+            setOcrRight(crop?.right ?? 67);
+            setOcrBottom(crop?.bottom ?? 20);
         }
     }, [isOpen]);
 
@@ -37,10 +37,10 @@ export default function SettingsPanel({ isOpen, onClose }: { isOpen: boolean; on
             dailyGoals: dailyGoals.map((v) => Number(v) || 0),
             showGoalLine: !!showGoalLine,
             ocrCrop: {
-                left: Number(ocrLeft) || 40,
+                left: Number(ocrLeft) || 50,
                 top: Number(ocrTop) || 17,
-                right: Number(ocrRight) || 70,
-                bottom: Number(ocrBottom) || 22,
+                right: Number(ocrRight) || 67,
+                bottom: Number(ocrBottom) || 20,
             },
         };
         saveData(data);
@@ -89,7 +89,7 @@ export default function SettingsPanel({ isOpen, onClose }: { isOpen: boolean; on
 
                 <div className="settings-row">
                     <div className="settings-row__label">画像OCRの切り取り（単位: %）</div>
-                    <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                    <div className="ocr-controls">
                         <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                             <div style={{ fontSize: 12 }}>Left</div>
                             <input type="number" min={0} max={100} value={ocrLeft} onChange={(e) => setOcrLeft(Number(e.target.value) || 0)} />
@@ -106,8 +106,8 @@ export default function SettingsPanel({ isOpen, onClose }: { isOpen: boolean; on
                             <div style={{ fontSize: 12 }}>Bottom</div>
                             <input type="number" min={0} max={100} value={ocrBottom} onChange={(e) => setOcrBottom(Number(e.target.value) || 0)} />
                         </label>
+                        <div className="ocr-note">コイン枚数部分のみが含まれるように設定してください。コインマークなどが含まれると正しく認識できない場合があります。</div>
                     </div>
-                    <div style={{ marginTop: 6, fontSize: 12, color: '#6b7280' }}>例: Left=40, Top=17, Right=70, Bottom=22</div>
                 </div>
             </div>
 

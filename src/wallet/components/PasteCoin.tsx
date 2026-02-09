@@ -201,12 +201,22 @@ export default function PasteCoin({ onApply }: Props) {
                 </div>
             )}
 
-            {recognized !== null && <div style={{ marginTop: 8, color: '#374151' }}>認識: {recognized.toLocaleString()} 枚</div>}
+            {recognized !== null && (
+                <div style={{ marginTop: 8, color: '#374151' }}>
+                    認識: <span style={{ color: 'red', fontWeight: 700 }}>{recognized.toLocaleString()}</span> 枚
+                </div>
+            )}
 
             <ConfirmModal
                 open={confirmOpen}
                 title="コイン枚数の確認"
-                message={pendingAmount !== null ? `${pendingAmount.toLocaleString()} 枚を入力します。よろしいですか？` : undefined}
+                message={
+                    pendingAmount !== null ? (
+                        <span>
+                            <span style={{ color: 'red', fontWeight: 700 }}>{pendingAmount.toLocaleString()}</span> 枚を入力します。よろしいですか？
+                        </span>
+                    ) : undefined
+                }
                 previewUrl={previewUrl}
                 onConfirm={() => {
                     if (pendingAmount !== null) onApply(pendingAmount);

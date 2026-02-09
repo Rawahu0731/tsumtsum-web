@@ -3,7 +3,7 @@ import React from 'react';
 type Props = {
     open: boolean;
     title?: string;
-    message?: string;
+    message?: React.ReactNode;
     previewUrl?: string | null;
     onConfirm: () => void;
     onCancel: () => void;
