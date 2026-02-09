@@ -10,6 +10,7 @@ import {
     hasSessionUndo,
 } from '../storage';
 import './RegisterPage.css';
+import PasteCoin from '../components/PasteCoin';
 
 export default function RegisterPage() {
     const [appData, setAppData] = useState<AppData | null>(null);
@@ -219,6 +220,7 @@ export default function RegisterPage() {
                         onChange={(e) => setCoinAmount(e.target.value)}
                         min="0"
                     />
+                    <PasteCoin onApply={(amount: number) => setCoinAmount(String(amount))} />
                 </div>
 
                 {/* 差分プレビュー */}
