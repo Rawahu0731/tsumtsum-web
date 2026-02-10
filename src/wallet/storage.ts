@@ -102,6 +102,15 @@ export function getLastRecordDate(data: AppData): string | null {
     return sorted[0].date;
 }
 
+// 前回の登録タイムスタンプを取得（ミリ秒）
+export function getLastRecordTimestamp(data: AppData): number | null {
+    if (data.records.length === 0) {
+        return null;
+    }
+    const sorted = [...data.records].sort((a, b) => b.timestamp - a.timestamp);
+    return sorted[0].timestamp;
+}
+
 // ユニークID生成
 function generateId(): string {
     return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;

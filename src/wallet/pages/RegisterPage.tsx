@@ -5,6 +5,7 @@ import {
     loadData,
     initializeData,
     getLastCoinAmount,
+    getLastRecordTimestamp,
     addRecord,
     undoLastSessionRecord,
     hasSessionUndo,
@@ -96,6 +97,8 @@ export default function RegisterPage() {
 
     // 差分計算
     const lastCoin = appData ? getLastCoinAmount(appData) : 0;
+    const lastRecordTimestamp = appData ? getLastRecordTimestamp(appData) : null;
+    const lastRecordDateTime = lastRecordTimestamp ? format(new Date(lastRecordTimestamp), 'yyyy-MM-dd HH:mm:ss') : null;
     const currentCoin = parseInt(coinAmount, 10);
     const diff = !isNaN(currentCoin) ? currentCoin - lastCoin : null;
 
@@ -151,7 +154,10 @@ export default function RegisterPage() {
                 <div className="last-coin-info">
                     <span className="last-coin-info__label">現在のコイン量</span>
                     <span className="last-coin-info__value">
-                        {lastCoin.toLocaleString()} 枚
+                        <div className="last-coin-info__value-main">{lastCoin.toLocaleString()} 枚</div>
+                        {lastRecordDateTime && (
+                            <div className="last-record-date">前回登録：{lastRecordDateTime}</div>
+                        )}
                     </span>
                 </div>
 

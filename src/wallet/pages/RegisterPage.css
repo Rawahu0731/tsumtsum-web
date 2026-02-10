@@ -175,6 +175,17 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     color: #111827;
 }
 
+.last-coin-info__value-main {
+    line-height: 1;
+}
+
+.last-record-date {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-top: 4px;
+    line-height: 1;
+}
+
 /* 登録ボタン */
 .submit-button {
     width: 100%;
