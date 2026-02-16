@@ -31,6 +31,7 @@ export function printLastRecordFromLocalStorage(): any | null {
         console.log('serebo:', last.serebo);
         console.log('pick:', last.pick);
         console.log('other:', last.other);
+        console.log('dailyGoalAtThatDay:', last.dailyGoalAtThatDay);
         console.log('full record object:', last);
         console.groupEnd();
         return last;

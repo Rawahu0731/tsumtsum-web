@@ -116,6 +116,65 @@ function generateId(): string {
     return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 }
 
+// その日の目標値を取得（フォールバック対応）
+export function getDailyGoalForDate(date: Date, settings?: AppData['settings']): number {
+    const dg = settings?.dailyGoals;
+    if (Array.isArray(dg) && dg.length === 7) {
+        return dg[date.getDay()] ?? 0;
+    }
+    return settings?.dailyGoal ?? 0;
+}
+
+// レコードの目標値を取得（フォールバック対応）
+export function getRecordDailyGoal(record: CoinRecord, settings?: AppData['settings']): number {
+    if (typeof record.dailyGoalAtThatDay === 'number') {
+        return record.dailyGoalAtThatDay;
+    }
+    // フォールバック: 日付から曜日を取得して現在の設定を使う
+    const date = new Date(record.date);
+    return getDailyGoalForDate(date, settings);
+}
+
+// 負債計算（累積型）
+export function calculateDebt(records: CoinRecord[], settings?: AppData['settings']): number {
+    // dailyGoalAtThatDay を持つレコードのみを対象にする（過去データは無視）
+    const targetRecords = records.filter(r => r.dailyGoalAtThatDay != null);
+    
+    // 日付でソート
+    const sortedRecords = [...targetRecords].sort((a, b) => a.date.localeCompare(b.date));
+    
+    // 日ごとに集計
+    const dailyMap = new Map<string, { earned: number; goal: number }>();
+    for (const record of sortedRecords) {
+        const existing = dailyMap.get(record.date);
+        const goal = getRecordDailyGoal(record, settings);
+        
+        if (existing) {
+            existing.earned += record.earned;
+            // 同じ日のレコードの場合、最初のゴールを使う
+        } else {
+            dailyMap.set(record.date, { earned: record.earned, goal });
+        }
+    }
+    
+    // 時系列で負債を計算
+    let debt = 0;
+    const sortedDays = Array.from(dailyMap.entries()).sort((a, b) => a[0].localeCompare(b[0]));
+    
+    for (const [, { earned, goal }] of sortedDays) {
+        if (earned < goal) {
+            // 不足分を負債に追加
+            debt += (goal - earned);
+        } else {
+            // 余剰分で負債を返済
+            const surplus = earned - goal;
+            debt = Math.max(0, debt - surplus);
+        }
+    }
+    
+    return debt;
+}
+
 // 履歴追加
 export function addRecord(
     data: AppData,
@@ -152,6 +211,9 @@ export function addRecord(
     }
 
     // レコード作成
+    const recordDate = new Date(date);
+    const dailyGoalAtThatDay = getDailyGoalForDate(recordDate, data.settings);
+    
     const record: CoinRecord = {
         id: generateId(),
         date,
@@ -162,6 +224,7 @@ export function addRecord(
         other: mode === 'other' ? Math.abs(diff) : 0,
         serebo: mode === 'serebo' ? Math.abs(diff) : 0,
         pick: mode === 'pick' ? Math.abs(diff) : 0,
+        dailyGoalAtThatDay, // その日の目標を保存
     };
 
     const newData: AppData = {

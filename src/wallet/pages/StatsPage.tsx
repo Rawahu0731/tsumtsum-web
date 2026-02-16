@@ -12,7 +12,7 @@ import {
 } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import type { AppData, CoinRecord, PeriodStats } from '../types';
-import { loadData, exportData, importData, getLastCoinAmount } from '../storage';
+import { loadData, exportData, importData, getLastCoinAmount, calculateDebt, getRecordDailyGoal } from '../storage';
 import Calendar from '../components/Calendar';
 import './StatsPage.css';
 import { Line, Pie } from 'react-chartjs-2';
@@ -144,9 +144,31 @@ export default function StatsPage() {
         const days = eachDayOfInterval({ start: subDays(new Date(), 6), end: new Date() });
         const labels = days.map((d) => format(d, 'M/d', { locale: ja }));
         const keys = days.map((d) => format(d, 'yyyy-MM-dd'));
-        const data = keys.map((key) => records.reduce((acc, r) => acc + (r.date === key ? r.earned : 0), 0));
-        return { labels, data, keys };
-    }, [records]);
+        
+        // 各日の獲得合計とレコードを取得
+        const data = keys.map((key) => {
+            const dayRecords = records.filter(r => r.date === key);
+            return dayRecords.reduce((acc, r) => acc + r.earned, 0);
+        });
+        
+        // 各日のゴール（その日のレコードから取得、なければ現在の設定）
+        const goals = keys.map((key) => {
+            const dayRecords = records.filter(r => r.date === key);
+            if (dayRecords.length > 0) {
+                // その日のレコードがある場合、最初のレコードの目標を使う
+                return getRecordDailyGoal(dayRecords[0], appData?.settings);
+            }
+            // レコードがない場合は現在の設定
+            const date = new Date(key);
+            const dg = appData?.settings?.dailyGoals;
+            if (Array.isArray(dg) && dg.length === 7) {
+                return dg[date.getDay()] ?? 0;
+            }
+            return appData?.settings?.dailyGoal ?? 0;
+        });
+        
+        return { labels, data, keys, goals };
+    }, [records, appData]);
 
     // 今日の獲得と目標までの残りを計算
     const todayStats = useMemo(() => {
@@ -166,20 +188,21 @@ export default function StatsPage() {
     const todayGoal = getGoalForDate(new Date());
     const remainingToday = Math.max(0, todayGoal - todayStats.earned);
 
+    // 負債を計算
+    const currentDebt = useMemo(() => {
+        if (!appData) return 0;
+        return calculateDebt(appData.records, appData.settings);
+    }, [appData]);
+
     const currentCoins = appData ? getLastCoinAmount(appData) : 0;
     const targetTotal = currentCoins + remainingToday;
 
     const chartData = useMemo(() => {
         const labels = last7.labels;
         const data = last7.data;
+        const goalData = last7.goals;
 
-        // 各日付に対する曜日別目標
-        const goalData = (last7.keys ?? []).map((k) => {
-            const d = parseISO(k);
-            return getGoalForDate(d) ?? 0;
-        });
-
-        // ポイントの色付け: 目標 > 0 の場合は達成なら緑、未達なら赤
+        // ポイントの色付け: earned >= dailyGoalAtThatDay なら緑、未達なら赤
         const pointColors = data.map((v, i) => {
             const goal = goalData[i] ?? 0;
             if (typeof goal === 'number' && goal > 0) {
@@ -219,7 +242,7 @@ export default function StatsPage() {
         }
 
         return { labels, datasets: ds };
-    }, [last7, appData, getGoalForDate]);
+    }, [last7, appData]);
 
     const chartOptions = useMemo(() => ({
         responsive: true,
@@ -399,7 +422,7 @@ export default function StatsPage() {
                     <div className="stats-card">
                         {(appData?.settings?.showGoalLine && (todayGoal ?? 0) > 0) ? (
                             <div className="stats-section__goal">
-                                <div>目標: {formatNumber(todayGoal ?? 0)} コイン</div>
+                                <div>今日の目標: {formatNumber(todayGoal ?? 0)} コイン</div>
                                 <div className={`stats-section__today ${remainingToday === 0 ? 'stats-section__today--done' : ''}`}>
                                     {remainingToday === 0 ? (
                                         <>今日の目標は達成済みです</>
@@ -410,6 +433,16 @@ export default function StatsPage() {
                                         </>
                                     )}
                                 </div>
+                                {currentDebt > 0 && (
+                                    <div className="stats-section__debt">
+                                        <div style={{ marginTop: '12px', fontSize: '14px', color: '#dc2626' }}>
+                                            <strong>現在の負債:</strong> {formatNumber(currentDebt)} コイン
+                                        </div>
+                                        <div style={{ marginTop: '4px', fontSize: '12px', color: '#6b7280' }}>
+                                            ※過去の未達成分の累積です（今日の目標には含まれません）
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         ) : (
                             <div className="empty-state">目標が設定されていません。</div>

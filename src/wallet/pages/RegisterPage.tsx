@@ -146,6 +146,10 @@ export default function RegisterPage() {
                 </p>
             </div>
 
+            {lastRecordDateTime && (
+                <div className="last-record-date last-record-date--outside">前回登録：{lastRecordDateTime}</div>
+            )}
+
             <div className="register-card">
                 {error && <div className="error-message">{error}</div>}
                 {success && <div className="success-message">{success}</div>}
@@ -155,9 +159,6 @@ export default function RegisterPage() {
                     <span className="last-coin-info__label">現在のコイン量</span>
                     <span className="last-coin-info__value">
                         <div className="last-coin-info__value-main">{lastCoin.toLocaleString()} 枚</div>
-                        {lastRecordDateTime && (
-                            <div className="last-record-date">前回登録：{lastRecordDateTime}</div>
-                        )}
                     </span>
                 </div>
 

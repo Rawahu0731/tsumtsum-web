@@ -186,6 +186,13 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     line-height: 1;
 }
 
+.last-record-date--outside {
+    font-size: 0.875rem;
+    color: #6b7280;
+    text-align: center;
+    margin: 0 0 16px;
+}
+
 /* 登録ボタン */
 .submit-button {
     width: 100%;

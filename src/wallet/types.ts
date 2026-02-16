@@ -12,6 +12,7 @@ export interface CoinRecord {
     other: number;       // その他使用量
     serebo: number;      // セレボ使用量
     pick: number;        // ピック使用量
+    dailyGoalAtThatDay?: number; // その日に実際に使われた目標値
 }
 
 export interface AppData {
