@@ -1,4 +1,5 @@
 import type { AppData, CoinRecord, RecordMode } from './types';
+import { format } from 'date-fns';
 
 const STORAGE_KEY = 'tsumtsum-wallet-data';
 const SESSION_KEY = 'tsumtsum-session-records';
@@ -137,11 +138,18 @@ export function getRecordDailyGoal(record: CoinRecord, settings?: AppData['setti
 
 // 負債計算（累積型）
 export function calculateDebt(records: CoinRecord[], settings?: AppData['settings']): number {
-    // dailyGoalAtThatDay を持つレコードのみを対象にする（過去データは無視）
-    const targetRecords = records.filter(r => r.dailyGoalAtThatDay != null);
+    // 今日の日付（YYYY-MM-DD形式）
+    const today = format(new Date(), 'yyyy-MM-dd');
     
-    // 日付でソート
-    const sortedRecords = [...targetRecords].sort((a, b) => a.date.localeCompare(b.date));
+    // dailyGoalAtThatDay を持ち、かつ今日より前のレコードのみを対象にする
+    const targetRecords = records.filter(r => r.dailyGoalAtThatDay != null && r.date < today);
+    
+    // 日付でソート、同じ日付の場合は timestamp でソート
+    const sortedRecords = [...targetRecords].sort((a, b) => {
+        const dateCompare = a.date.localeCompare(b.date);
+        if (dateCompare !== 0) return dateCompare;
+        return a.timestamp - b.timestamp;
+    });
     
     // 日ごとに集計
     const dailyMap = new Map<string, { earned: number; goal: number }>();
@@ -151,7 +159,7 @@ export function calculateDebt(records: CoinRecord[], settings?: AppData['setting
         
         if (existing) {
             existing.earned += record.earned;
-            // 同じ日のレコードの場合、最初のゴールを使う
+            existing.goal = goal;  // 常に上書き（後勝ち）
         } else {
             dailyMap.set(record.date, { earned: record.earned, goal });
         }

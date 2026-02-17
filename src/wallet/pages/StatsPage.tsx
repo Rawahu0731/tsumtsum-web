@@ -433,7 +433,7 @@ export default function StatsPage() {
                                         </>
                                     )}
                                 </div>
-                                {currentDebt > 0 && (
+                                {todayStats.earned >= todayGoal && currentDebt > 0 && (
                                     <div className="stats-section__debt">
                                         <div style={{ marginTop: '12px', fontSize: '14px', color: '#dc2626' }}>
                                             <strong>現在の負債:</strong> {formatNumber(currentDebt)} コイン
