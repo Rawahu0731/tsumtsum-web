@@ -367,6 +367,17 @@ export default function StatsPage() {
                 </div>
             )}
 
+            {/* 現在の総コイン数（最重要・最上部に大きく表示） */}
+            <section className="stats-section hero-coin-display">
+                <h3 className="stats-section__title">現在のコイン</h3>
+                <div className="hero-coin-display__value">
+                    {formatNumber(currentCoins)}
+                </div>
+                <div className="hero-coin-display__label">
+                    COINS
+                </div>
+            </section>
+
             {/* カレンダー */}
             <section className="stats-section">
                 <Calendar
@@ -387,19 +398,19 @@ export default function StatsPage() {
                         </div>
                         <div className="total-stat total-stat--premium">
                             <span className="total-stat__label">プレボ</span>
-                            <span className="total-stat__value">-{formatNumber(totalStats.premiumBox)}</span>
+                            <span className="total-stat__value">−{formatNumber(totalStats.premiumBox)}</span>
                         </div>
                         <div className="total-stat total-stat--serebo">
                             <span className="total-stat__label">セレボ</span>
-                            <span className="total-stat__value">-{formatNumber(totalStats.serebo)}</span>
+                            <span className="total-stat__value">−{formatNumber(totalStats.serebo)}</span>
                         </div>
                         <div className="total-stat total-stat--pick">
                             <span className="total-stat__label">ピック</span>
-                            <span className="total-stat__value">-{formatNumber(totalStats.pick)}</span>
+                            <span className="total-stat__value">−{formatNumber(totalStats.pick)}</span>
                         </div>
                         <div className="total-stat total-stat--other">
                             <span className="total-stat__label">その他</span>
-                            <span className="total-stat__value">-{formatNumber(totalStats.other)}</span>
+                            <span className="total-stat__value">−{formatNumber(totalStats.other)}</span>
                         </div>
                     </div>
                 </div>
@@ -433,22 +444,29 @@ export default function StatsPage() {
                                         </>
                                     )}
                                 </div>
-                                {todayStats.earned >= todayGoal && currentDebt > 0 && (
-                                    <div className="stats-section__debt">
-                                        <div style={{ marginTop: '12px', fontSize: '14px', color: '#dc2626' }}>
-                                            <strong>現在の負債:</strong> {formatNumber(currentDebt)} コイン
-                                        </div>
-                                        <div style={{ marginTop: '4px', fontSize: '12px', color: '#6b7280' }}>
-                                            ※過去の未達成分の累積です（今日の目標には含まれません）
-                                        </div>
-                                    </div>
-                                )}
                             </div>
                         ) : (
                             <div className="empty-state">目標が設定されていません。</div>
                         )}
                     </div>
                 </section>
+
+                {/* 負債（専用セクション） */}
+                {currentDebt > 0 && (
+                    <section className="stats-section">
+                        <h3 className="stats-section__title">昨日までの負債</h3>
+                        <div className="stats-card">
+                            <div className="stats-section__debt">
+                                <div style={{ fontSize: '18px', color: '#dc2626', fontWeight: 'bold' }}>
+                                    {formatNumber(currentDebt)} コイン
+                                </div>
+                                <div style={{ marginTop: '8px', fontSize: '13px', color: '#6b7280' }}>
+                                    ※今日の進捗は反映されません。昨日までの負債です。
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                )}
 
             {/* 月別統計 */}
             {monthlyStats.length > 0 && (

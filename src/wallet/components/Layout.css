@@ -14,7 +14,7 @@
 .header {
   display: none;
   background: #fff;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid #f5f5f5;
   padding: 0 24px;
   height: 64px;
   position: sticky;
@@ -32,10 +32,11 @@
 }
 
 .header__title {
-  font-size: 1.25rem;
+  font-size: 1.125rem;
   font-weight: 600;
-  color: #111827;
+  color: #111;
   margin: 0;
+  letter-spacing: -0.01em;
 }
 
 .header__nav {
@@ -48,22 +49,22 @@
   align-items: center;
   gap: 6px;
   padding: 8px 16px;
-  border-radius: 8px;
-  font-size: 0.875rem;
+  border-radius: 10px;
+  font-size: 0.8125rem;
   font-weight: 500;
-  color: #6b7280;
+  color: #999;
   text-decoration: none;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
 }
 
 .header__link:hover {
-  background: #f3f4f6;
-  color: #111827;
+  background: #fafafa;
+  color: #111;
 }
 
 .header__link--active {
-  background: #f0f7ff;
-  color: #2563eb;
+  background: #f5f5f5;
+  color: #111;
 }
 
 .header__icon {
@@ -73,12 +74,12 @@
 
 .settings-button {
   background: transparent;
-  border: 1px solid transparent;
+  border: none;
   padding: 8px;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
 }
-.settings-button:hover { background: #f3f4f6; }
+.settings-button:hover { background: #fafafa; }
 
 /* Mobile fixed settings button (top-right) */
 .settings-button--mobile {
@@ -86,16 +87,16 @@
   top: calc(12px + env(safe-area-inset-top));
   right: 12px;
   z-index: 500;
-  background: transparent;
-  border: 1px solid transparent;
+  background: #fafafa;
+  border: none;
   padding: 8px;
-  border-radius: 8px;
+  border-radius: 10px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
 }
-.settings-button--mobile:hover { background: #f3f4f6; }
+.settings-button--mobile:hover { background: #f5f5f5; }
 
 @media (min-width: 768px) {
   .settings-button--mobile { display: none; }
@@ -108,8 +109,10 @@
   bottom: 0;
   left: 0;
   right: 0;
-  background: #fff;
-  border-top: 1px solid #e5e7eb;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(0, 0, 0, 0.04);
   padding: 8px 0;
   padding-bottom: max(8px, env(safe-area-inset-bottom));
   z-index: 100;
@@ -123,7 +126,7 @@
   gap: 4px;
   padding: 8px;
   text-decoration: none;
-  color: #9ca3af;
+  color: #bbb;
   transition: all 0.2s ease;
 }
 
@@ -135,7 +138,7 @@
   cursor: pointer;
 }
 .tabbar__link--active {
-  color: #2563eb;
+  color: #111;
 }
 
 .tabbar__icon {
@@ -144,8 +147,9 @@
 }
 
 .tabbar__label {
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   font-weight: 500;
+  letter-spacing: 0.02em;
 }
 
 /* Desktop: Show header, hide tabbar */

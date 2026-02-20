@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {
     format,
     startOfMonth,
@@ -63,6 +63,7 @@ export default function Calendar({
     currentMonth,
     onMonthChange,
 }: CalendarProps) {
+    const [hoveredDate, setHoveredDate] = useState<string | null>(null);
     const dailyStats = useMemo(() => calculateDailyStats(records), [records]);
 
     // カレンダーの日付を生成（月曜始まり）
@@ -128,8 +129,52 @@ export default function Calendar({
                         <div
                             key={dateStr}
                             className={`calendar__day ${isToday(day) ? 'calendar__day--today' : ''} ${hasData ? 'calendar__day--has-data' : ''}`}
+                            onMouseEnter={() => hasData && setHoveredDate(dateStr)}
+                            onMouseLeave={() => setHoveredDate(null)}
                         >
                             <span className="calendar__day-number">{format(day, 'd')}</span>
+                            
+                            {/* ホバー時のポップオーバー */}
+                            {hasData && hoveredDate === dateStr && (
+                                <div className="calendar__popover">
+                                    <div className="calendar__popover-title">{format(day, 'M月d日', { locale: ja })}</div>
+                                    {stats.earned > 0 && (
+                                        <div className="calendar__popover-item calendar__popover-item--earned">
+                                            <span className="calendar__popover-dot" />
+                                            <span className="calendar__popover-label">獲得</span>
+                                            <span className="calendar__popover-value">+{stats.earned.toLocaleString()}</span>
+                                        </div>
+                                    )}
+                                    {stats.premiumBox > 0 && (
+                                        <div className="calendar__popover-item calendar__popover-item--premium">
+                                            <span className="calendar__popover-dot" />
+                                            <span className="calendar__popover-label">プレボ</span>
+                                            <span className="calendar__popover-value">−{stats.premiumBox.toLocaleString()}</span>
+                                        </div>
+                                    )}
+                                    {stats.serebo > 0 && (
+                                        <div className="calendar__popover-item calendar__popover-item--serebo">
+                                            <span className="calendar__popover-dot" />
+                                            <span className="calendar__popover-label">セレクト</span>
+                                            <span className="calendar__popover-value">−{stats.serebo.toLocaleString()}</span>
+                                        </div>
+                                    )}
+                                    {stats.pick > 0 && (
+                                        <div className="calendar__popover-item calendar__popover-item--pick">
+                                            <span className="calendar__popover-dot" />
+                                            <span className="calendar__popover-label">ピック</span>
+                                            <span className="calendar__popover-value">−{stats.pick.toLocaleString()}</span>
+                                        </div>
+                                    )}
+                                    {stats.other > 0 && (
+                                        <div className="calendar__popover-item calendar__popover-item--other">
+                                            <span className="calendar__popover-dot" />
+                                            <span className="calendar__popover-label">その他</span>
+                                            <span className="calendar__popover-value">−{stats.other.toLocaleString()}</span>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                             {hasData && (
                                 <div className="calendar__day-stats">
                                     {stats.earned > 0 && (

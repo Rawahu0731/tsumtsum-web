@@ -156,9 +156,9 @@ export default function RegisterPage() {
 
                 {/* 前回コイン情報 */}
                 <div className="last-coin-info">
-                    <span className="last-coin-info__label">現在のコイン量</span>
+                    <span className="last-coin-info__label">現在のコイン</span>
                     <span className="last-coin-info__value">
-                        <div className="last-coin-info__value-main">{lastCoin.toLocaleString()} 枚</div>
+                        <div className="last-coin-info__value-main">{lastCoin.toLocaleString()}</div>
                     </span>
                 </div>
 

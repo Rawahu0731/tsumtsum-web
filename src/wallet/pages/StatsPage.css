@@ -5,46 +5,54 @@
 
 .stats-page__header {
     text-align: center;
-    margin-bottom: 24px;
+    margin-bottom: 48px;
 }
 
 .stats-page__title {
-    font-size: 1.5rem;
+    font-size: 1.125rem;
     font-weight: 600;
-    color: #111827;
+    color: #111;
     margin: 0 0 8px;
+    letter-spacing: -0.01em;
 }
 
 .stats-page__subtitle {
-    font-size: 0.875rem;
-    color: #6b7280;
+    font-size: 0.6875rem;
+    color: #666;
     margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
 }
 
 /* セクション */
 .stats-section {
-    margin-bottom: 24px;
+    margin-bottom: 96px;
 }
 
 .stats-section__title {
-    font-size: 1rem;
-    font-weight: 600;
-    color: #374151;
-    margin: 0 0 12px;
+    font-size: 0.6875rem;
+    font-weight: 500;
+    color: #999;
+    margin: 0 0 24px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    text-align: center;
 }
 
 .stats-section__goal {
-    font-size: 0.9rem;
-    color: #6b7280;
-    margin: 0 0 12px;
-    font-weight: 600;
+    font-size: 0.875rem;
+    color: #666;
+    margin: 0 0 16px;
+    font-weight: 500;
+    text-align: center;
 }
 
 .stats-section__today {
-    margin-top: 6px;
-    font-size: 0.95rem;
-    color: #374151;
-    font-weight: 600;
+    margin-top: 8px;
+    font-size: 0.875rem;
+    color: #666;
+    font-weight: 500;
+    text-align: center;
 }
 
 .stats-section__today--done {
@@ -52,24 +60,49 @@
 }
 
 .stats-section__target {
-    margin-top: 4px;
-    font-size: 0.85rem;
-    font-weight: 500;
-    color: #6b7280;
+    margin-top: 6px;
+    font-size: 0.8125rem;
+    font-weight: 400;
+    color: #999;
+    text-align: center;
+}
+
+/* Hero coin display */
+.hero-coin-display {
+    margin-bottom: 120px;
+    text-align: center;
+}
+
+.hero-coin-display__value {
+    font-size: 5rem;
+    font-weight: 800;
+    color: #111;
+    letter-spacing: -0.04em;
+    line-height: 1;
+    margin-bottom: 12px;
+}
+
+.hero-coin-display__label {
+    font-size: 0.6875rem;
+    color: #bbb;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    font-weight: 400;
 }
 
 .stats-section__toggle {
-    background: transparent;
-    border: 1px solid #e5e7eb;
-    padding: 6px 10px;
-    border-radius: 8px;
-    font-size: 0.85rem;
-    color: #374151;
+    background: #fafafa;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    color: #666;
     cursor: pointer;
+    font-weight: 500;
 }
 
 .stats-section__toggle:hover {
-    background: #f9fafb;
+    background: #f5f5f5;
 }
 
 .stats-section__toggle--under {
@@ -79,11 +112,11 @@
 
 /* 統計カード */
 .stats-card {
-    background: #fff;
-    border-radius: 16px;
-    padding: 20px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    border: 1px solid #e5e7eb;
+    background: transparent;
+    border-radius: 0;
+    padding: 0;
+    box-shadow: none;
+    border: none;
 }
 
 .chart-container {
@@ -103,64 +136,68 @@
 .total-stats {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    gap: 16px;
+    gap: 48px;
 }
 
 .total-stat {
     text-align: center;
-    padding: 16px;
-    border-radius: 12px;
-    background: #f9fafb;
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
 }
 
 .total-stat--earned {
-    background: #ecfdf5;
+    background: transparent;
 }
 
 .total-stat--premium {
-    background: #f5f3ff;
+    background: transparent;
 }
 
 .total-stat--other {
-    background: #fffbeb;
+    background: transparent;
 }
 
 /* セレボ */
 .total-stat--serebo {
-    background: #ecfeff;
+    background: transparent;
 }
 
 /* ピック */
 .total-stat--pick {
-    background: #fff1f2;
+    background: transparent;
 }
 
 .total-stat__label {
-    font-size: 0.75rem;
-    font-weight: 500;
-    color: #6b7280;
-    margin-bottom: 4px;
+    font-size: 0.6875rem;
+    font-weight: 400;
+    color: #999;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
 }
 
 .total-stat__value {
-    font-size: 1.25rem;
+    font-size: 2.25rem;
     font-weight: 700;
+    color: #111;
+    letter-spacing: -0.03em;
 }
 
 .total-stat--earned .total-stat__value {
-    color: #059669;
+    color: #111;
 }
 
 .total-stat--premium .total-stat__value {
-    color: #7c3aed;
+    color: #dc2626;
 }
 
 .total-stat--other .total-stat__value {
-    color: #d97706;
+    color: #dc2626;
 }
 
 .total-stat--serebo .total-stat__value {
-    color: #0ea5b0;
+    color: #dc2626;
 }
 
 .total-stat--pick .total-stat__value {
@@ -175,44 +212,50 @@
 
 .period-stats-table th,
 .period-stats-table td {
-    padding: 12px 8px;
+    padding: 20px 16px;
     text-align: right;
     font-size: 0.875rem;
 }
 
 .period-stats-table th {
     font-weight: 500;
-    color: #6b7280;
-    border-bottom: 1px solid #e5e7eb;
+    color: #999;
+    border-bottom: 1px solid #f5f5f5;
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
 }
 
 .period-stats-table th:first-child,
 .period-stats-table td:first-child {
     text-align: left;
+    font-weight: 500;
 }
 
 .period-stats-table td {
-    color: #111827;
+    color: #111;
+    font-weight: 600;
+    border-bottom: 1px solid #fafafa;
 }
 
 .period-stats-table tbody tr:hover {
-    background: #f9fafb;
+    background: #fcfcfc;
 }
 
 .period-stats-table__earned {
-    color: #059669 !important;
+    color: #111 !important;
 }
 
 .period-stats-table__premium {
-    color: #7c3aed !important;
+    color: #dc2626 !important;
 }
 
 .period-stats-table__other {
-    color: #d97706 !important;
+    color: #dc2626 !important;
 }
 
 .period-stats-table__serebo {
-    color: #0ea5b0 !important;
+    color: #dc2626 !important;
 }
 
 .period-stats-table__pick {
@@ -224,17 +267,18 @@
     display: flex;
     gap: 12px;
     flex-wrap: wrap;
+    justify-content: center;
 }
 
 .data-button {
-    flex: 1;
+    flex: 0 0 auto;
     min-width: 140px;
-    padding: 12px 16px;
-    font-size: 0.875rem;
+    padding: 12px 24px;
+    font-size: 0.8125rem;
     font-weight: 500;
-    border-radius: 10px;
+    border-radius: 20px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.15s ease;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -242,23 +286,23 @@
 }
 
 .data-button--export {
-    background: #2563eb;
-    color: #fff;
+    background: #f5f5f5;
+    color: #111;
     border: none;
 }
 
 .data-button--export:hover {
-    background: #1d4ed8;
+    background: #eee;
 }
 
 .data-button--import {
-    background: #fff;
-    color: #374151;
-    border: 1px solid #e5e7eb;
+    background: #fafafa;
+    color: #666;
+    border: none;
 }
 
 .data-button--import:hover {
-    background: #f9fafb;
+    background: #f5f5f5;
 }
 
 .data-button svg {
@@ -273,15 +317,15 @@
 /* メッセージ */
 .stats-message {
     padding: 12px 16px;
-    border-radius: 10px;
+    border-radius: 6px;
     font-size: 0.875rem;
-    margin-bottom: 16px;
+    margin-bottom: 24px;
 }
 
 .stats-message--success {
-    background: #ecfdf5;
-    border: 1px solid #a7f3d0;
-    color: #059669;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    color: #15803d;
 }
 
 .stats-message--error {
@@ -292,25 +336,34 @@
 
 /* レスポンシブ */
 @media (max-width: 640px) {
+    .hero-coin-display {
+        margin-bottom: 64px;
+    }
+    
+    .hero-coin-display__value {
+        font-size: 3rem;
+    }
+    
+    .hero-coin-display__label {
+        font-size: 0.625rem;
+    }
+    
     .total-stats {
-        grid-template-columns: 1fr;
-        gap: 12px;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 40px 32px;
     }
-
-    .total-stat {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 12px 16px;
+    
+    .total-stat:first-child {
+        grid-column: 1 / -1;
     }
-
-    .total-stat__label {
-        margin-bottom: 0;
+    
+    .total-stat__value {
+        font-size: 1.75rem;
     }
 
     .period-stats-table th,
     .period-stats-table td {
-        padding: 10px 6px;
+        padding: 14px 10px;
         font-size: 0.8125rem;
         white-space: nowrap;
     }
@@ -325,15 +378,15 @@
 /* 空の状態 */
 .empty-state {
     text-align: center;
-    padding: 40px 20px;
-    color: #6b7280;
+    padding: 48px 20px;
+    color: #999;
 }
 
 .empty-state__icon {
     width: 48px;
     height: 48px;
     margin: 0 auto 16px;
-    stroke: #d1d5db;
+    stroke: #ddd;
 }
 
 .empty-state__text {
