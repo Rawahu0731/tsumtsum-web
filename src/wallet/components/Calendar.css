@@ -38,6 +38,11 @@
     background: #f5f5f5;
 }
 
+.calendar__nav-button:focus {
+    outline: 2px solid #059669;
+    outline-offset: 2px;
+}
+
 .calendar__nav-button svg {
     width: 14px;
     height: 14px;
@@ -125,7 +130,6 @@
 .calendar__stat {
     display: flex;
     align-items: center;
-    gap: 2px;
     white-space: nowrap;
     overflow: hidden;
     font-weight: 600;
@@ -135,50 +139,11 @@
     color: #111;
 }
 
-.calendar__stat--premium {
+.calendar__stat--spent {
     color: #999;
 }
 
-.calendar__stat--other {
-    color: #999;
-}
 
-/* セレボ */
-.calendar__stat--serebo {
-    color: #999;
-}
-
-/* ピック */
-.calendar__stat--pick {
-    color: #999;
-}
-
-.calendar__stat-dot {
-    width: 4px;
-    height: 4px;
-    border-radius: 50%;
-    flex-shrink: 0;
-}
-
-.calendar__stat--earned .calendar__stat-dot {
-    background: #111;
-}
-
-.calendar__stat--premium .calendar__stat-dot {
-    background: #ef4444;
-}
-
-.calendar__stat--serebo .calendar__stat-dot {
-    background: #3b82f6;
-}
-
-.calendar__stat--pick .calendar__stat-dot {
-    background: #8b5cf6;
-}
-
-.calendar__stat--other .calendar__stat-dot {
-    background: #f59e0b;
-}
 
 /* レスポンシブ：小さい画面では数値を短縮 */
 @media (max-width: 480px) {
@@ -239,16 +204,8 @@
     }
 
     .calendar__stat {
-        white-space: normal;
-        overflow-wrap: anywhere;
-        display: block;
-        line-height: 1;
-    }
-
-    /* Reduce icon/marker size to save space */
-    .calendar__stat-dot {
-        width: 3px;
-        height: 3px;
+        white-space: nowrap;
+        line-height: 1.2;
     }
 
     /* Slightly smaller nav and title */
