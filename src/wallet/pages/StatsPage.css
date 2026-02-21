@@ -402,6 +402,10 @@
 }
 
 @media (max-width: 480px) {
+    .stats-page__content {
+        padding: 0 8px;
+    }
+
     .stats-simple-card__value {
         font-size: 1.5rem;
     }
