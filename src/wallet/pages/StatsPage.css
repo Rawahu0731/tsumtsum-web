@@ -1,32 +1,30 @@
 .stats-page {
-    max-width: 800px;
+    max-width: 840px;
+    margin: 0 auto;
+    background: #fff;
+}
+
+.stats-page__content {
+    padding: 0 24px;
+    max-width: 680px;
     margin: 0 auto;
 }
 
-.stats-page__header {
-    text-align: center;
-    margin-bottom: 48px;
-}
-
-.stats-page__title {
-    font-size: 1.125rem;
-    font-weight: 600;
-    color: #111;
-    margin: 0 0 8px;
-    letter-spacing: -0.01em;
-}
-
-.stats-page__subtitle {
-    font-size: 0.6875rem;
-    color: #666;
-    margin: 0;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
+.stats-page__empty {
+    padding: 48px 24px;
+    min-height: 60vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* セクション */
 .stats-section {
-    margin-bottom: 96px;
+    margin-bottom: 80px;
+}
+
+.stats-section--compact {
+    margin-bottom: 24px;
 }
 
 .stats-section__title {
@@ -67,47 +65,54 @@
     text-align: center;
 }
 
-/* Hero coin display */
-.hero-coin-display {
-    margin-bottom: 120px;
-    text-align: center;
-}
-
-.hero-coin-display__value {
-    font-size: 5rem;
-    font-weight: 800;
-    color: #111;
-    letter-spacing: -0.04em;
-    line-height: 1;
-    margin-bottom: 12px;
-}
-
-.hero-coin-display__label {
-    font-size: 0.6875rem;
-    color: #bbb;
-    text-transform: uppercase;
-    letter-spacing: 0.15em;
-    font-weight: 400;
-}
-
 .stats-section__toggle {
-    background: #fafafa;
-    border: none;
-    padding: 10px 20px;
+    background: transparent;
+    border: 1px solid #ECECEC;
+    padding: 10px 24px;
     border-radius: 20px;
     font-size: 0.75rem;
     color: #666;
     cursor: pointer;
     font-weight: 500;
+    transition: all 0.2s ease;
 }
 
 .stats-section__toggle:hover {
-    background: #f5f5f5;
+    background: #fafafa;
+    border-color: #ddd;
+}
+
+.stats-section__toggle:focus {
+    outline: 2px solid #059669;
+    outline-offset: 2px;
 }
 
 .stats-section__toggle--under {
     display: block;
-    margin: 12px auto 0;
+    margin: 16px auto 0;
+}
+
+/* シンプルカード（現在のコイン、今月の合計用） */
+.stats-simple-card {
+    text-align: center;
+    padding: 32px 16px;
+    border-bottom: 1px solid #ECECEC;
+}
+
+.stats-simple-card__label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #999;
+    margin-bottom: 12px;
+    letter-spacing: 0.05em;
+}
+
+.stats-simple-card__value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #111;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
 }
 
 /* 統計カード */
@@ -122,49 +127,30 @@
 .chart-container {
     width: 100%;
     height: 220px;
+    padding: 16px 0;
 }
 
 .pie-chart-container {
     width: 100%;
-    height: 260px;
+    height: 280px;
     display: flex;
     align-items: center;
     justify-content: center;
+    padding: 16px 0;
 }
 
 /* 合計統計 */
 .total-stats {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    gap: 48px;
+    gap: 40px 24px;
+    padding: 24px 0;
 }
 
 .total-stat {
     text-align: center;
     padding: 0;
     border-radius: 0;
-    background: transparent;
-}
-
-.total-stat--earned {
-    background: transparent;
-}
-
-.total-stat--premium {
-    background: transparent;
-}
-
-.total-stat--other {
-    background: transparent;
-}
-
-/* セレボ */
-.total-stat--serebo {
-    background: transparent;
-}
-
-/* ピック */
-.total-stat--pick {
     background: transparent;
 }
 
@@ -175,31 +161,25 @@
     margin-bottom: 12px;
     text-transform: uppercase;
     letter-spacing: 0.08em;
+    display: block;
 }
 
 .total-stat__value {
-    font-size: 2.25rem;
+    font-size: 1.875rem;
     font-weight: 700;
     color: #111;
-    letter-spacing: -0.03em;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+    display: block;
 }
 
 .total-stat--earned .total-stat__value {
     color: #111;
 }
 
-.total-stat--premium .total-stat__value {
-    color: #dc2626;
-}
-
-.total-stat--other .total-stat__value {
-    color: #dc2626;
-}
-
-.total-stat--serebo .total-stat__value {
-    color: #dc2626;
-}
-
+.total-stat--premium .total-stat__value,
+.total-stat--other .total-stat__value,
+.total-stat--serebo .total-stat__value,
 .total-stat--pick .total-stat__value {
     color: #dc2626;
 }
@@ -208,11 +188,12 @@
 .period-stats-table {
     width: 100%;
     border-collapse: collapse;
+    margin: 8px 0;
 }
 
 .period-stats-table th,
 .period-stats-table td {
-    padding: 20px 16px;
+    padding: 18px 12px;
     text-align: right;
     font-size: 0.875rem;
 }
@@ -220,7 +201,7 @@
 .period-stats-table th {
     font-weight: 500;
     color: #999;
-    border-bottom: 1px solid #f5f5f5;
+    border-bottom: 1px solid #ECECEC;
     font-size: 0.6875rem;
     text-transform: uppercase;
     letter-spacing: 0.08em;
@@ -235,29 +216,21 @@
 .period-stats-table td {
     color: #111;
     font-weight: 600;
-    border-bottom: 1px solid #fafafa;
+    border-bottom: 1px solid #f8f8f8;
+    font-variant-numeric: tabular-nums;
 }
 
 .period-stats-table tbody tr:hover {
-    background: #fcfcfc;
+    background: #fafafa;
 }
 
 .period-stats-table__earned {
     color: #111 !important;
 }
 
-.period-stats-table__premium {
-    color: #dc2626 !important;
-}
-
-.period-stats-table__other {
-    color: #dc2626 !important;
-}
-
-.period-stats-table__serebo {
-    color: #dc2626 !important;
-}
-
+.period-stats-table__premium,
+.period-stats-table__other,
+.period-stats-table__serebo,
 .period-stats-table__pick {
     color: #dc2626 !important;
 }
@@ -268,6 +241,7 @@
     gap: 12px;
     flex-wrap: wrap;
     justify-content: center;
+    padding: 8px 0;
 }
 
 .data-button {
@@ -276,33 +250,37 @@
     padding: 12px 24px;
     font-size: 0.8125rem;
     font-weight: 500;
-    border-radius: 20px;
+    border-radius: 24px;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: all 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
+    border: 1px solid #ECECEC;
 }
 
 .data-button--export {
-    background: #f5f5f5;
+    background: transparent;
     color: #111;
-    border: none;
 }
 
 .data-button--export:hover {
-    background: #eee;
+    background: #fafafa;
 }
 
 .data-button--import {
-    background: #fafafa;
+    background: transparent;
     color: #666;
-    border: none;
 }
 
 .data-button--import:hover {
-    background: #f5f5f5;
+    background: #fafafa;
+}
+
+.data-button:focus {
+    outline: 2px solid #059669;
+    outline-offset: 2px;
 }
 
 .data-button svg {
@@ -317,62 +295,22 @@
 /* メッセージ */
 .stats-message {
     padding: 12px 16px;
-    border-radius: 6px;
+    border-radius: 8px;
     font-size: 0.875rem;
-    margin-bottom: 24px;
+    margin: 24px 24px 0;
+    border: 1px solid;
 }
 
 .stats-message--success {
     background: #f0fdf4;
-    border: 1px solid #bbf7d0;
+    border-color: #bbf7d0;
     color: #15803d;
 }
 
 .stats-message--error {
     background: #fef2f2;
-    border: 1px solid #fecaca;
+    border-color: #fecaca;
     color: #dc2626;
-}
-
-/* レスポンシブ */
-@media (max-width: 640px) {
-    .hero-coin-display {
-        margin-bottom: 64px;
-    }
-    
-    .hero-coin-display__value {
-        font-size: 3rem;
-    }
-    
-    .hero-coin-display__label {
-        font-size: 0.625rem;
-    }
-    
-    .total-stats {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 40px 32px;
-    }
-    
-    .total-stat:first-child {
-        grid-column: 1 / -1;
-    }
-    
-    .total-stat__value {
-        font-size: 1.75rem;
-    }
-
-    .period-stats-table th,
-    .period-stats-table td {
-        padding: 14px 10px;
-        font-size: 0.8125rem;
-        white-space: nowrap;
-    }
-
-    .period-stats-table {
-        display: block;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-    }
 }
 
 /* 空の状態 */
@@ -380,6 +318,7 @@
     text-align: center;
     padding: 48px 20px;
     color: #999;
+    font-size: 0.875rem;
 }
 
 .empty-state__icon {
@@ -392,4 +331,88 @@
 .empty-state__text {
     font-size: 0.875rem;
     margin: 0;
+    line-height: 1.6;
+}
+
+/* 目標と負債 */
+.stats-section__debt {
+    text-align: center;
+    padding: 16px;
+}
+
+/* レスポンシブ */
+@media (max-width: 768px) {
+    .stats-page__content {
+        padding: 0 16px;
+    }
+
+    .stats-section {
+        margin-bottom: 64px;
+    }
+
+    .stats-section--compact {
+        margin-bottom: 16px;
+    }
+
+    .stats-simple-card {
+        padding: 24px 16px;
+    }
+
+    .stats-simple-card__value {
+        font-size: 1.75rem;
+    }
+
+    .total-stats {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 32px 24px;
+    }
+
+    .total-stat:first-child {
+        grid-column: 1 / -1;
+    }
+
+    .total-stat__value {
+        font-size: 1.5rem;
+    }
+
+    .period-stats-table {
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .period-stats-table th,
+    .period-stats-table td {
+        padding: 14px 10px;
+        font-size: 0.8125rem;
+        white-space: nowrap;
+    }
+
+    .chart-container {
+        height: 200px;
+    }
+
+    .pie-chart-container {
+        height: 240px;
+    }
+
+    .stats-message {
+        margin: 16px 16px 0;
+    }
+}
+
+@media (max-width: 480px) {
+    .stats-simple-card__value {
+        font-size: 1.5rem;
+    }
+
+    .total-stat__value {
+        font-size: 1.25rem;
+    }
+
+    .data-button {
+        min-width: 120px;
+        padding: 10px 20px;
+        font-size: 0.75rem;
+    }
 }

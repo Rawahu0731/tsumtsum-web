@@ -179,32 +179,12 @@ export default function Calendar({
                                 <div className="calendar__day-stats">
                                     {stats.earned > 0 && (
                                         <div className="calendar__stat calendar__stat--earned">
-                                            <span className="calendar__stat-dot" />
                                             +{formatShortNumber(stats.earned)}
                                         </div>
                                     )}
-                                    {stats.premiumBox > 0 && (
-                                        <div className="calendar__stat calendar__stat--premium">
-                                            <span className="calendar__stat-dot" />
-                                            -{formatShortNumber(stats.premiumBox)}
-                                        </div>
-                                    )}
-                                    {stats.other > 0 && (
-                                        <div className="calendar__stat calendar__stat--other">
-                                            <span className="calendar__stat-dot" />
-                                            -{formatShortNumber(stats.other)}
-                                        </div>
-                                    )}
-                                    {stats.serebo > 0 && (
-                                        <div className="calendar__stat calendar__stat--serebo">
-                                            <span className="calendar__stat-dot" />
-                                            -{formatShortNumber(stats.serebo)}
-                                        </div>
-                                    )}
-                                    {stats.pick > 0 && (
-                                        <div className="calendar__stat calendar__stat--pick">
-                                            <span className="calendar__stat-dot" />
-                                            -{formatShortNumber(stats.pick)}
+                                    {(stats.premiumBox + stats.other + stats.serebo + stats.pick) > 0 && (
+                                        <div className="calendar__stat calendar__stat--spent">
+                                            -{formatShortNumber(stats.premiumBox + stats.other + stats.serebo + stats.pick)}
                                         </div>
                                     )}
                                 </div>

@@ -14,6 +14,7 @@ import { ja } from 'date-fns/locale';
 import type { AppData, CoinRecord, PeriodStats } from '../types';
 import { loadData, exportData, importData, getLastCoinAmount, calculateDebt, getRecordDailyGoal } from '../storage';
 import Calendar from '../components/Calendar';
+import TodayHero from '../components/TodayHero';
 import './StatsPage.css';
 import { Line, Pie } from 'react-chartjs-2';
 import {
@@ -172,9 +173,17 @@ export default function StatsPage() {
 
     // 今日の獲得と目標までの残りを計算
     const todayStats = useMemo(() => {
-        const key = format(new Date(), 'yyyy-MM-dd');
-        const earned = records.reduce((acc, r) => acc + (r.date === key ? r.earned : 0), 0);
-        return { key, earned };
+        const todayKey = format(new Date(), 'yyyy-MM-dd');
+        const yesterdayKey = format(subDays(new Date(), 1), 'yyyy-MM-dd');
+        
+        const todayEarned = records.reduce((acc, r) => acc + (r.date === todayKey ? r.earned : 0), 0);
+        const yesterdayEarned = records.reduce((acc, r) => acc + (r.date === yesterdayKey ? r.earned : 0), 0);
+        
+        return { 
+            key: todayKey, 
+            earned: todayEarned,
+            yesterdayEarned 
+        };
     }, [records]);
 
     const getGoalForDate = useCallback((date: Date) => {
@@ -187,6 +196,16 @@ export default function StatsPage() {
 
     const todayGoal = getGoalForDate(new Date());
     const remainingToday = Math.max(0, todayGoal - todayStats.earned);
+
+    // 今月の合計を計算
+    const thisMonthStats = useMemo(() => {
+        const now = new Date();
+        const monthStart = format(startOfMonth(now), 'yyyy-MM-dd');
+        const monthEnd = format(endOfMonth(now), 'yyyy-MM-dd');
+        
+        const monthRecords = records.filter(r => r.date >= monthStart && r.date <= monthEnd);
+        return monthRecords.reduce((acc, r) => acc + r.earned, 0);
+    }, [records]);
 
     // 負債を計算
     const currentDebt = useMemo(() => {
@@ -336,10 +355,7 @@ export default function StatsPage() {
     if (!appData) {
         return (
             <div className="stats-page">
-                <div className="stats-page__header">
-                    <h2 className="stats-page__title">統計</h2>
-                </div>
-                <div className="stats-card">
+                <div className="stats-page__empty">
                     <div className="empty-state">
                         <svg className="empty-state__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -356,10 +372,11 @@ export default function StatsPage() {
 
     return (
         <div className="stats-page">
-            <div className="stats-page__header">
-                <h2 className="stats-page__title">統計</h2>
-                <p className="stats-page__subtitle">コインの獲得・使用状況を確認</p>
-            </div>
+            {/* ヒーロー領域：今日の獲得コイン */}
+            <TodayHero 
+                todayEarned={todayStats.earned} 
+                yesterdayEarned={todayStats.yesterdayEarned} 
+            />
 
             {message && (
                 <div className={`stats-message stats-message--${message.type}`}>
@@ -367,25 +384,31 @@ export default function StatsPage() {
                 </div>
             )}
 
-            {/* 現在の総コイン数（最重要・最上部に大きく表示） */}
-            <section className="stats-section hero-coin-display">
-                <h3 className="stats-section__title">現在のコイン</h3>
-                <div className="hero-coin-display__value">
-                    {formatNumber(currentCoins)}
-                </div>
-                <div className="hero-coin-display__label">
-                    COINS
-                </div>
-            </section>
+            <div className="stats-page__content">
+                {/* 現在のコイン数 */}
+                <section className="stats-section stats-section--compact">
+                    <div className="stats-simple-card">
+                        <div className="stats-simple-card__label">現在のコイン</div>
+                        <div className="stats-simple-card__value">{formatNumber(currentCoins)}</div>
+                    </div>
+                </section>
 
-            {/* カレンダー */}
-            <section className="stats-section">
-                <Calendar
-                    records={records}
-                    currentMonth={currentMonth}
-                    onMonthChange={setCurrentMonth}
-                />
-            </section>
+                {/* 今月の合計 */}
+                <section className="stats-section stats-section--compact">
+                    <div className="stats-simple-card">
+                        <div className="stats-simple-card__label">今月の合計</div>
+                        <div className="stats-simple-card__value">+{formatNumber(thisMonthStats)}</div>
+                    </div>
+                </section>
+
+                {/* カレンダー */}
+                <section className="stats-section">
+                    <Calendar
+                        records={records}
+                        currentMonth={currentMonth}
+                        onMonthChange={setCurrentMonth}
+                    />
+                </section>
 
             {/* 全期間統計 */}
             <section className="stats-section">
@@ -599,6 +622,7 @@ export default function StatsPage() {
                     </div>
                 </div>
             </section>
+            </div>
         </div>
     );
 }
