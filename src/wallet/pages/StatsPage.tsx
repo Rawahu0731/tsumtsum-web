@@ -375,7 +375,6 @@ export default function StatsPage() {
             {/* ヒーロー領域：今日の獲得コイン */}
             <TodayHero 
                 todayEarned={todayStats.earned} 
-                yesterdayEarned={todayStats.yesterdayEarned} 
             />
 
             {message && (
