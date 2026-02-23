@@ -72,6 +72,8 @@ export function initializeData(initialCoinAmount: number): AppData {
             dailyGoal: 0,
             dailyGoals: [0, 0, 0, 0, 0, 0, 0],
             showGoalLine: true,
+            // デフォルトで負債を表示する
+            showDebt: true,
             ocrCrop: {
                 left: 40,
                 top: 17,
@@ -140,9 +142,19 @@ export function getRecordDailyGoal(record: CoinRecord, settings?: AppData['setti
 export function calculateDebt(records: CoinRecord[], settings?: AppData['settings']): number {
     // 今日の日付（YYYY-MM-DD形式）
     const today = format(new Date(), 'yyyy-MM-dd');
-    
+    // リセット日が設定されている場合、その日付以降のみを計算対象とする
+    const resetDate = settings?.debtResetDate; // YYYY-MM-DD 形式
+
     // dailyGoalAtThatDay を持ち、かつ今日より前のレコードのみを対象にする
-    const targetRecords = records.filter(r => r.dailyGoalAtThatDay != null && r.date < today);
+    const targetRecords = records.filter(r => {
+        if (r.dailyGoalAtThatDay == null) return false;
+        if (r.date >= today) return false; // 今日以降は計算対象外
+        if (resetDate) {
+            // resetDate 以降のみを対象（リセット日を含む）
+            return r.date >= resetDate;
+        }
+        return true;
+    });
     
     // 日付でソート、同じ日付の場合は timestamp でソート
     const sortedRecords = [...targetRecords].sort((a, b) => {

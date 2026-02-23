@@ -474,7 +474,7 @@ export default function StatsPage() {
                 </section>
 
                 {/* 負債（専用セクション） */}
-                {currentDebt > 0 && (
+                {(appData?.settings?.showDebt ?? true) && currentDebt > 0 && (
                     <section className="stats-section">
                         <h3 className="stats-section__title">昨日までの負債</h3>
                         <div className="stats-card">

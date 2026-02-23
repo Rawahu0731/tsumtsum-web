@@ -23,6 +23,10 @@ export interface AppData {
         dailyGoal?: number; // 1日あたりのコイン稼ぎ目標（互換性用: 単一値）
         dailyGoals?: number[]; // 曜日別目標（0=日,1=月,...6=土）
         showGoalLine?: boolean; // グラフに目標線を表示するか
+        // 負債表示フラグ（true=表示）
+        showDebt?: boolean;
+        // 負債をリセットした日（YYYY-MM-DD）。存在する場合はこの日以降のみ負債計算対象とする
+        debtResetDate?: string;
         // OCR用のクロップ領域（割合、単位は％）。left/top/right/bottom の順で指定
         ocrCrop?: {
             left?: number;

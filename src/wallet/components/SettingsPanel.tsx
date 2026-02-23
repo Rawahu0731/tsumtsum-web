@@ -6,6 +6,8 @@ export default function SettingsPanel({ isOpen, onClose }: { isOpen: boolean; on
     const [dailyGoal, setDailyGoal] = useState<number>(0);
     const [dailyGoals, setDailyGoals] = useState<number[]>([0, 0, 0, 0, 0, 0, 0]);
     const [showGoalLine, setShowGoalLine] = useState<boolean>(true);
+    const [showDebt, setShowDebt] = useState<boolean>(true);
+    const [debtResetDate, setDebtResetDate] = useState<string>('');
     const [ocrLeft, setOcrLeft] = useState<number>(50);
     const [ocrTop, setOcrTop] = useState<number>(17);
     const [ocrRight, setOcrRight] = useState<number>(67);
@@ -16,6 +18,8 @@ export default function SettingsPanel({ isOpen, onClose }: { isOpen: boolean; on
         if (data?.settings) {
             setDailyGoal(data.settings.dailyGoal ?? 0);
             setShowGoalLine(data.settings.showGoalLine ?? true);
+            setShowDebt(data.settings.showDebt ?? true);
+            setDebtResetDate(data.settings.debtResetDate ?? '');
             if (Array.isArray(data.settings.dailyGoals) && data.settings.dailyGoals.length === 7) {
                 setDailyGoals(data.settings.dailyGoals);
             } else {
@@ -30,12 +34,30 @@ export default function SettingsPanel({ isOpen, onClose }: { isOpen: boolean; on
         }
     }, [isOpen]);
 
+    // showDebt / debtResetDate を localStorage と即時同期
+    useEffect(() => {
+        try {
+            const data = loadData() || { initialCoinAmount: 0, records: [], settings: {} };
+            data.settings = {
+                ...(data.settings || {}),
+                showDebt: !!showDebt,
+                debtResetDate: debtResetDate || undefined,
+            };
+            saveData(data);
+            window.dispatchEvent(new CustomEvent('tsumtsum-data-changed'));
+        } catch {
+            // ignore
+        }
+    }, [showDebt, debtResetDate]);
+
     function handleSave() {
         const data = loadData() || { initialCoinAmount: 0, records: [], settings: {} };
         data.settings = {
             dailyGoal: Number(dailyGoal) || dailyGoals[new Date().getDay()] || 0,
             dailyGoals: dailyGoals.map((v) => Number(v) || 0),
             showGoalLine: !!showGoalLine,
+            showDebt: !!showDebt,
+            debtResetDate: debtResetDate || undefined,
             ocrCrop: {
                 left: Number(ocrLeft) || 50,
                 top: Number(ocrTop) || 17,
@@ -47,6 +69,16 @@ export default function SettingsPanel({ isOpen, onClose }: { isOpen: boolean; on
         // notify other parts of app
         window.dispatchEvent(new CustomEvent('tsumtsum-data-changed'));
         onClose();
+    }
+
+    function handleResetDebt() {
+        const ok = window.confirm('本当に負債をリセットしますか？');
+        if (!ok) return;
+        const today = new Date();
+        const ymd = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        setDebtResetDate(ymd);
+        setShowDebt(true);
+        // useEffect will persist the change
     }
 
     return (
@@ -86,6 +118,25 @@ export default function SettingsPanel({ isOpen, onClose }: { isOpen: boolean; on
                         onChange={(e) => setShowGoalLine(e.target.checked)}
                     />
                 </label>
+
+                <label className="settings-row">
+                    <div className="settings-row__label">負債を表示する</div>
+                    <input
+                        type="checkbox"
+                        checked={showDebt}
+                        onChange={(e) => setShowDebt(e.target.checked)}
+                    />
+                </label>
+
+                <div className="settings-row">
+                    <div className="settings-row__label">負債リセット</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                        <button className="btn btn--ghost" onClick={handleResetDebt}>負債をリセット</button>
+                        {debtResetDate && (
+                            <div style={{ marginTop: 6, fontSize: 12, color: '#6b7280' }}>リセット日: {debtResetDate}</div>
+                        )}
+                    </div>
+                </div>
 
                 <div className="settings-row">
                     <div className="settings-row__label">画像OCRの切り取り（単位: %）</div>
