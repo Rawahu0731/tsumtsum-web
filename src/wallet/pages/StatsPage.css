@@ -130,6 +130,10 @@
     padding: 16px 0;
 }
 
+.chart-container { position: relative; }
+.chart-sparkles { position: absolute; inset: 0; pointer-events: none; }
+.chart-sparkle { position: absolute; width: 14px; height: 14px; transform: translate(-50%, -50%); }
+
 .pie-chart-container {
     width: 100%;
     height: 280px;
@@ -420,3 +424,46 @@
         font-size: 0.75rem;
     }
 }
+
+/* キラキラ（目標達成時のパーティクル） */
+.goal-with-sparkles {
+    position: relative;
+    display: inline-block;
+}
+
+.sparkles {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: visible;
+}
+
+.sparkle {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    opacity: 0;
+    transform: translateY(0) scale(0.8) rotate(0deg);
+    animation: sparkle 1400ms ease-in-out infinite;
+}
+
+.sparkle svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+@keyframes sparkle {
+    0% { opacity: 0; transform: translateY(0) scale(0.6) rotate(0deg); }
+    12% { opacity: 1; transform: translateY(-6px) scale(1.05) rotate(15deg); }
+    60% { opacity: 0.9; transform: translateY(-16px) scale(1) rotate(30deg); }
+    100% { opacity: 0; transform: translateY(-28px) scale(0.6) rotate(60deg); }
+}
+
+/* 位置と遅延のパターン（6個に調整） */
+.sparkle--1 { left: 14%; top: 62%; animation-delay: 0ms; }
+.sparkle--2 { left: 30%; top: 64%; animation-delay: 120ms; }
+.sparkle--3 { left: 44%; top: 58%; animation-delay: 240ms; }
+.sparkle--4 { left: 56%; top: 60%; animation-delay: 80ms; }
+.sparkle--5 { left: 70%; top: 64%; animation-delay: 200ms; }
+.sparkle--6 { left: 84%; top: 58%; animation-delay: 320ms; }

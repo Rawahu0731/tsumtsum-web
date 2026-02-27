@@ -12,11 +12,12 @@ import {
 } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import type { AppData, CoinRecord, PeriodStats } from '../types';
-import { loadData, exportData, importData, getLastCoinAmount, calculateDebt, getRecordDailyGoal } from '../storage';
+import { loadData, exportData, importData, getLastCoinAmount, calculateDebt, getRecordDailyGoal, getRecordSecondaryGoal, getSecondaryGoalForDate } from '../storage';
 import Calendar from '../components/Calendar';
 import TodayHero from '../components/TodayHero';
 import './StatsPage.css';
 import { Line, Pie } from 'react-chartjs-2';
+import { Chart as ChartType } from 'chart.js';
 import {
     Chart as ChartJS,
     CategoryScale,
@@ -151,24 +152,32 @@ export default function StatsPage() {
             const dayRecords = records.filter(r => r.date === key);
             return dayRecords.reduce((acc, r) => acc + r.earned, 0);
         });
-        
-        // 各日のゴール（その日のレコードから取得、なければ現在の設定）
-        const goals = keys.map((key) => {
+        // 各日のゴール（primary/secondary）を決定
+        const primaryGoals = keys.map((key) => {
             const dayRecords = records.filter(r => r.date === key);
             if (dayRecords.length > 0) {
-                // その日のレコードがある場合、最初のレコードの目標を使う
                 return getRecordDailyGoal(dayRecords[0], appData?.settings);
             }
-            // レコードがない場合は現在の設定
             const date = new Date(key);
+            // primary: 設定の primaryGoals/primaryGoal へフォールバック
+            const pgArr = appData?.settings?.primaryGoals;
+            if (Array.isArray(pgArr) && pgArr.length === 7) return pgArr[date.getDay()] ?? 0;
+            if (typeof appData?.settings?.primaryGoal === 'number') return appData!.settings!.primaryGoal;
+            // 旧フィールド fallback
             const dg = appData?.settings?.dailyGoals;
-            if (Array.isArray(dg) && dg.length === 7) {
-                return dg[date.getDay()] ?? 0;
-            }
+            if (Array.isArray(dg) && dg.length === 7) return dg[date.getDay()] ?? 0;
             return appData?.settings?.dailyGoal ?? 0;
         });
-        
-        return { labels, data, keys, goals };
+
+        const secondaryGoals = keys.map((key) => {
+            const dayRecords = records.filter(r => r.date === key);
+            if (dayRecords.length > 0) return getRecordSecondaryGoal(dayRecords[0], appData?.settings);
+            // 日付がない場合は設定を参照
+            const date = new Date(key);
+            return getSecondaryGoalForDate(date, appData?.settings);
+        });
+
+        return { labels, data, keys, primaryGoals, secondaryGoals };
     }, [records, appData]);
 
     // 今日の獲得と目標までの残りを計算
@@ -187,15 +196,19 @@ export default function StatsPage() {
     }, [records]);
 
     const getGoalForDate = useCallback((date: Date) => {
+        const pg = appData?.settings?.primaryGoals;
+        if (Array.isArray(pg) && pg.length === 7) return pg[date.getDay()] ?? 0;
+        if (typeof appData?.settings?.primaryGoal === 'number') return appData!.settings!.primaryGoal;
+        // fallback to legacy
         const dg = appData?.settings?.dailyGoals;
-        if (Array.isArray(dg) && dg.length === 7) {
-            return dg[date.getDay()] ?? 0;
-        }
+        if (Array.isArray(dg) && dg.length === 7) return dg[date.getDay()] ?? 0;
         return appData?.settings?.dailyGoal ?? 0;
     }, [appData]);
 
-    const todayGoal = getGoalForDate(new Date());
-    const remainingToday = Math.max(0, todayGoal - todayStats.earned);
+        const todayPrimary = getGoalForDate(new Date());
+        const todaySecondary = getSecondaryGoalForDate(new Date(), appData?.settings) ?? 0;
+        const remainingToPrimary = Math.max(0, todayPrimary - todayStats.earned);
+        const remainingToSecondary = Math.max(0, todaySecondary - todayStats.earned);
 
     // 今月の合計を計算
     const thisMonthStats = useMemo(() => {
@@ -214,20 +227,21 @@ export default function StatsPage() {
     }, [appData]);
 
     const currentCoins = appData ? getLastCoinAmount(appData) : 0;
-    const targetTotal = currentCoins + remainingToday;
+    const targetTotal = currentCoins + remainingToPrimary;
 
     const chartData = useMemo(() => {
         const labels = last7.labels;
         const data = last7.data;
-        const goalData = last7.goals;
+        const pGoals = last7.primaryGoals;
+        const sGoals = last7.secondaryGoals;
 
-        // ポイントの色付け: earned >= dailyGoalAtThatDay なら緑、未達なら赤
+        // 色分け: dailyCoins < primary -> 赤, primary <= daily < secondary -> 緑, >= secondary -> 金色
         const pointColors = data.map((v, i) => {
-            const goal = goalData[i] ?? 0;
-            if (typeof goal === 'number' && goal > 0) {
-                return v >= goal ? '#16a34a' : '#dc2626';
-            }
-            return '#10b981';
+            const primary = pGoals[i] ?? 0;
+            const secondary = sGoals[i] ?? Infinity;
+            if (v >= secondary) return '#D4AF37'; // 金色
+            if (v >= primary) return '#16a34a'; // 緑
+            return '#dc2626'; // 赤
         });
 
         const ds: any[] = [];
@@ -245,15 +259,29 @@ export default function StatsPage() {
 
         const showGoal = appData?.settings?.showGoalLine ?? true;
         if (showGoal) {
-            const hasAnyGoal = goalData.some((v) => typeof v === 'number' && v > 0);
+            const hasAnyGoal = pGoals.some((v) => typeof v === 'number' && v > 0);
             if (hasAnyGoal) {
                 ds.push({
-                    label: '目標',
-                    data: goalData,
-                    borderColor: '#dc2626',
+                    label: '第一段階目標',
+                    data: pGoals,
+                    borderColor: '#ef4444',
                     borderWidth: 2,
                     pointRadius: 0,
                     borderDash: [6, 4],
+                    fill: false,
+                    tension: 0,
+                });
+            }
+            // 第二段階目標（破線・金色）
+            const hasAnyS = sGoals.some((v) => typeof v === 'number' && v > 0);
+            if (hasAnyS) {
+                ds.push({
+                    label: '第二段階目標',
+                    data: sGoals,
+                    borderColor: '#D4AF37',
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    borderDash: [6, 6],
                     fill: false,
                     tension: 0,
                 });
@@ -274,6 +302,112 @@ export default function StatsPage() {
             y: { beginAtZero: true, ticks: { precision: 0 } },
         },
     }), []);
+
+    // 軽量 キラキラ描画プラグイン（secondary を達成したポイントに一度だけ簡易エフェクトを描画）
+    const sparklePlugin = useMemo(() => ({
+        id: 'sparklePlugin',
+        afterDatasetDraw(chart: any) {
+            try {
+                const ctx = chart.ctx;
+                const meta = chart.getDatasetMeta(0);
+                const data = chart.data.datasets[0].data || [];
+                const sGoals = last7.secondaryGoals || [];
+
+                ctx.save();
+                for (let i = 0; i < meta.data.length; i++) {
+                    const point = meta.data[i];
+                    const x = point.x;
+                    const y = point.y;
+                    const val = data[i] || 0;
+                    const s = sGoals[i] ?? Infinity;
+                    if (val >= s) {
+                        // 軽量な放射状グローを描画（小さな白い円を3つ）
+                        ctx.globalCompositeOperation = 'lighter';
+                        for (let j = 0; j < 3; j++) {
+                            const r = 2 + j * 1.5;
+                            ctx.beginPath();
+                            ctx.fillStyle = `rgba(255,245,200,${0.12 - j*0.03})`;
+                            ctx.arc(x + (j-1)*2.5, y - (j%2)*2.5, r, 0, Math.PI*2);
+                            ctx.fill();
+                        }
+                    }
+                }
+                ctx.restore();
+            } catch (e) {
+                // ignore
+            }
+        }
+    }), [last7]);
+
+    // チャート参照とチャート上に表示する星の位置
+    const chartRef = useRef<ChartType | null>(null);
+    const chartContainerRef = useRef<HTMLDivElement | null>(null);
+    const [chartSparkles, setChartSparkles] = useState<Array<{left:number, top:number}>>([]);
+
+    // チャート描画後に金色(secondary達成)のポイント位置を計算して星を表示
+    useEffect(() => {
+        const chart = chartRef.current;
+        const container = chartContainerRef.current;
+        if (!chart || !container) {
+            setChartSparkles([]);
+            return;
+        }
+
+        try {
+            const meta = (chart as any).getDatasetMeta(0);
+            const sGoals = last7.secondaryGoals || [];
+
+            const positions: Array<{left:number, top:number}> = [];
+
+            // datasets[].data の要素は number のほかオブジェクトの場合があるため数値へ正規化
+            const rawData: any[] = chart.data?.datasets?.[0]?.data || [];
+            const normData: number[] = rawData.map((v: any) => {
+                if (v == null) return 0;
+                if (typeof v === 'number') return v;
+                if (typeof v === 'object' && typeof v.y === 'number') return v.y;
+                if (Array.isArray(v) && typeof v[1] === 'number') return v[1];
+                return 0;
+            });
+
+            for (let i = 0; i < meta.data.length; i++) {
+                const point = meta.data[i];
+                const val = normData[i] ?? 0;
+                const s = sGoals[i] ?? Infinity;
+                if (val >= s) {
+                    const x = point.x;
+                    const y = point.y;
+                    // 相対位置（container の左上を基準）
+                    positions.push({ left: x, top: y });
+                }
+            }
+
+            setChartSparkles(positions);
+        } catch (e) {
+            setChartSparkles([]);
+        }
+    }, [chartData, last7, chartRef.current]);
+
+    // 簡易キラキラコンポーネント（表示時にCSSでアニメ）
+    const Sparkles: React.FC = () => {
+        // 少なめの星型パーティクル（SVG）をレンダリング
+        const count = 6;
+        const starPath = "M12 .587l3.668 7.431L24 9.423l-6 5.845L19.335 24 12 19.771 4.665 24 6 15.268 0 9.423l8.332-1.405L12 .587z";
+        return (
+            <div className="sparkles" aria-hidden>
+                {Array.from({ length: count }).map((_, i) => (
+                    <svg
+                        key={i}
+                        className={`sparkle sparkle--${i + 1}`}
+                        viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg"
+                        aria-hidden
+                    >
+                        <path d={starPath} fill="#FFD700" />
+                    </svg>
+                ))}
+            </div>
+        );
+    };
 
     // 使ったコインの割合（プレボ・セレボ・ピック・その他）
     const usageTotals = useMemo(() => {
@@ -443,8 +577,23 @@ export default function StatsPage() {
                 <h3 className="stats-section__title">直近7日間の獲得</h3>
                     {/* 目標表示は専用セクションに移動しました */}
                 <div className="stats-card">
-                    <div className="chart-container">
-                        <Line data={chartData} options={chartOptions} />
+                    <div className="chart-container" ref={chartContainerRef}>
+                        <Line ref={chartRef as any} data={chartData} options={chartOptions} plugins={[sparklePlugin as any]} />
+
+                        {/* チャート上の金色ポイントに表示する星（DOM） */}
+                        <div className="chart-sparkles" aria-hidden>
+                            {chartSparkles.map((p, i) => (
+                                <svg
+                                    key={i}
+                                    className={`chart-sparkle sparkle sparkle--${(i % 6) + 1}`}
+                                    viewBox="0 0 24 24"
+                                    style={{ left: p.left, top: p.top }}
+                                    xmlns="http://www.w3.org/2000/svg"
+                                >
+                                    <path d="M12 .587l3.668 7.431L24 9.423l-6 5.845L19.335 24 12 19.771 4.665 24 6 15.268 0 9.423l8.332-1.405L12 .587z" fill="#FFD700" />
+                                </svg>
+                            ))}
+                        </div>
                     </div>
                 </div>
             </section>
@@ -453,23 +602,30 @@ export default function StatsPage() {
                 <section className="stats-section">
                     <h3 className="stats-section__title">目標</h3>
                     <div className="stats-card">
-                        {(appData?.settings?.showGoalLine && (todayGoal ?? 0) > 0) ? (
-                            <div className="stats-section__goal">
-                                <div>今日の目標: {formatNumber(todayGoal ?? 0)} コイン</div>
-                                <div className={`stats-section__today ${remainingToday === 0 ? 'stats-section__today--done' : ''}`}>
-                                    {remainingToday === 0 ? (
-                                        <>今日の目標は達成済みです</>
-                                    ) : (
-                                        <>
-                                            今日あと {formatNumber(remainingToday)} コインで目標達成
-                                            <div className="stats-section__target">現在 {formatNumber(currentCoins)} → 合計 {formatNumber(targetTotal)} コイン</div>
-                                        </>
-                                    )}
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="empty-state">目標が設定されていません。</div>
-                        )}
+                                {(appData?.settings?.showGoalLine && (todayPrimary ?? 0) > 0) ? (
+                                    <div className="stats-section__goal">
+                                        <div>第一段階目標: {formatNumber(todayPrimary ?? 0)} コイン</div>
+
+                                        {todayStats.earned < todayPrimary ? (
+                                            <div className="stats-section__today">
+                                                今日あと {formatNumber(remainingToPrimary)} コインで第一段階達成
+                                            </div>
+                                        ) : (todaySecondary > 0 && todayStats.earned < todaySecondary) ? (
+                                            <div className="stats-section__today stats-section__today--done">
+                                                第一段階クリア　第二段階目標まで {formatNumber(remainingToSecondary)} コイン
+                                            </div>
+                                        ) : (
+                                            <div className="goal-with-sparkles">
+                                                <div className="stats-section__today stats-section__today--done">今日の目標は達成済みです</div>
+                                                <Sparkles />
+                                            </div>
+                                        )}
+
+                                        <div className="stats-section__target">現在 {formatNumber(currentCoins)} → 合計 {formatNumber(targetTotal)} コイン</div>
+                                    </div>
+                                ) : (
+                                    <div className="empty-state">目標が設定されていません。</div>
+                                )}
                     </div>
                 </section>
 

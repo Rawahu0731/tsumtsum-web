@@ -32,6 +32,11 @@
   overflow: auto;
 }
 
+/* Desktop: allow wider panel on larger screens */
+@media (min-width: 900px) {
+  .settings-panel { width: 720px; max-width: 60%; }
+}
+
 .settings-panel__footer {
   padding: 16px 20px;
   border-top: 1px solid #f5f5f5;
@@ -74,6 +79,72 @@
 .ocr-controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .ocr-controls label { display: flex; flex-direction: column; align-items: flex-start; }
 .ocr-note { margin-top: 6px; font-size: 12px; color: #6b7280; }
+
+/* Weekday goals: desktop table-like layout */
+.weekday-goals {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px 12px;
+}
+.weekday-goals__header {
+  display: grid;
+  grid-template-columns: 120px 1fr 1fr;
+  gap: 12px;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 20;
+  padding: 8px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+.weekday-goals__col-header {
+  font-size: 0.875rem;
+  color: #111827;
+  font-weight: 600;
+}
+.weekday-goals__item {
+  display: grid;
+  grid-template-columns: 120px 1fr 1fr;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #f5f7fa;
+}
+.weekday-goals__label {
+  width: 120px;
+  font-weight: 600;
+  color: #111827;
+}
+.weekday-goals__cell { display: flex; align-items: center; gap: 8px; }
+.weekday-goals__hint { font-size: 12px; color: #6b7280; min-width: 36px; }
+.weekday-goals__input {
+  width: 100%;
+  max-width: 160px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid #e6e6e6;
+  text-align: right;
+}
+
+/* Mobile: convert to stacked cards per weekday */
+@media (max-width: 600px) {
+  .weekday-goals { display: flex; flex-direction: column; gap: 10px; }
+  .weekday-goals__header { display: none; }
+  .weekday-goals__item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    border: 1px solid #f1f5f9;
+    border-radius: 10px;
+    background: #fff;
+  }
+  .weekday-goals__label { font-weight: 700; margin-bottom: 6px; }
+  .weekday-goals__cell { flex-direction: column; align-items: stretch; }
+  .weekday-goals__hint { color: #9ca3af; }
+  .weekday-goals__input { max-width: 100%; }
+}
 
 @media (max-width: 600px) {
   .settings-row { flex-direction: column; align-items: stretch; }

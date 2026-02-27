@@ -12,7 +12,10 @@ export interface CoinRecord {
     other: number;       // その他使用量
     serebo: number;      // セレボ使用量
     pick: number;        // ピック使用量
-    dailyGoalAtThatDay?: number; // その日に実際に使われた目標値
+    dailyGoalAtThatDay?: number; // その日に実際に使われた目標値（互換性）
+    // 新仕様: その日に使われた第一段階・第二段階の目標値
+    primaryGoalAtThatDay?: number;
+    secondaryGoalAtThatDay?: number;
 }
 
 export interface AppData {
@@ -20,7 +23,13 @@ export interface AppData {
     records: CoinRecord[];
     // ユーザー設定
     settings?: {
-        dailyGoal?: number; // 1日あたりのコイン稼ぎ目標（互換性用: 単一値）
+        // 第一段階（primary）と第二段階（secondary）をサポート
+        primaryGoal?: number; // 互換性: 単一目標としての第一段階
+        primaryGoals?: number[]; // 曜日別の第一段階目標
+        secondaryGoal?: number; // 互換性: 単一目標としての第二段階
+        secondaryGoals?: number[]; // 曜日別の第二段階目標
+        // 旧フィールド（互換性維持）
+        dailyGoal?: number; // 1日あたりのコイン稼ぎ目標（旧仕様）
         dailyGoals?: number[]; // 曜日別目標（0=日,1=月,...6=土）
         showGoalLine?: boolean; // グラフに目標線を表示するか
         // 負債表示フラグ（true=表示）

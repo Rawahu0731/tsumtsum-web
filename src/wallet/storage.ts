@@ -69,6 +69,12 @@ export function initializeData(initialCoinAmount: number): AppData {
         initialCoinAmount,
         records: [],
         settings: {
+            // 新仕様: primary / secondary を用意（旧 dailyGoal と互換）
+            primaryGoal: 0,
+            primaryGoals: [0, 0, 0, 0, 0, 0, 0],
+            secondaryGoal: 100, // 初期差分: primary + 100
+            secondaryGoals: [100, 100, 100, 100, 100, 100, 100],
+            // 旧フィールドは互換性のため残す
             dailyGoal: 0,
             dailyGoals: [0, 0, 0, 0, 0, 0, 0],
             showGoalLine: true,
@@ -120,79 +126,103 @@ function generateId(): string {
 }
 
 // その日の目標値を取得（フォールバック対応）
-export function getDailyGoalForDate(date: Date, settings?: AppData['settings']): number {
-    const dg = settings?.dailyGoals;
-    if (Array.isArray(dg) && dg.length === 7) {
-        return dg[date.getDay()] ?? 0;
+// 第一段階（primary）の目標を取得（曜日配列 -> 単一値 -> 旧フィールドへフォールバック）
+export function getPrimaryGoalForDate(date: Date, settings?: AppData['settings']): number {
+    const pg = settings?.primaryGoals;
+    if (Array.isArray(pg) && pg.length === 7) {
+        return pg[date.getDay()] ?? 0;
     }
+    if (typeof settings?.primaryGoal === 'number') return settings.primaryGoal;
+    // 旧フィールドへフォールバック
+    const dg = settings?.dailyGoals;
+    if (Array.isArray(dg) && dg.length === 7) return dg[date.getDay()] ?? 0;
     return settings?.dailyGoal ?? 0;
 }
 
 // レコードの目標値を取得（フォールバック対応）
-export function getRecordDailyGoal(record: CoinRecord, settings?: AppData['settings']): number {
+export function getRecordPrimaryGoal(record: CoinRecord, settings?: AppData['settings']): number {
+    if (typeof record.primaryGoalAtThatDay === 'number') {
+        return record.primaryGoalAtThatDay;
+    }
     if (typeof record.dailyGoalAtThatDay === 'number') {
+        // 旧データ互換
         return record.dailyGoalAtThatDay;
     }
-    // フォールバック: 日付から曜日を取得して現在の設定を使う
     const date = new Date(record.date);
-    return getDailyGoalForDate(date, settings);
+    return getPrimaryGoalForDate(date, settings);
+}
+
+// 互換性: 既存コードのためのエイリアス
+export const getRecordDailyGoal = getRecordPrimaryGoal;
+
+// 第二段階（secondary）の目標を取得（レコード優先、設定へフォールバック）
+export function getRecordSecondaryGoal(record: CoinRecord, settings?: AppData['settings']): number {
+    if (typeof record.secondaryGoalAtThatDay === 'number') return record.secondaryGoalAtThatDay;
+    // 旧データに secondary がなければ設定から取得
+    const date = new Date(record.date);
+    const sg = settings?.secondaryGoals;
+    if (Array.isArray(sg) && sg.length === 7) return sg[date.getDay()] ?? 0;
+    if (typeof settings?.secondaryGoal === 'number') return settings.secondaryGoal;
+    // フォールバック: primary + 固定差分 100
+    const primary = getPrimaryGoalForDate(date, settings);
+    return primary + 100;
+}
+
+export function getSecondaryGoalForDate(date: Date, settings?: AppData['settings']): number {
+    const sg = settings?.secondaryGoals;
+    if (Array.isArray(sg) && sg.length === 7) return sg[date.getDay()] ?? 0;
+    if (typeof settings?.secondaryGoal === 'number') return settings.secondaryGoal;
+    const primary = getPrimaryGoalForDate(date, settings);
+    return primary + 100;
 }
 
 // 負債計算（累積型）
 export function calculateDebt(records: CoinRecord[], settings?: AppData['settings']): number {
     // 今日の日付（YYYY-MM-DD形式）
     const today = format(new Date(), 'yyyy-MM-dd');
-    // リセット日が設定されている場合、その日付以降のみを計算対象とする
-    const resetDate = settings?.debtResetDate; // YYYY-MM-DD 形式
+    const resetDate = settings?.debtResetDate;
 
-    // dailyGoalAtThatDay を持ち、かつ今日より前のレコードのみを対象にする
+    // 今日より前、かつ（リセット日があればリセット日以降）のレコードを対象にする
     const targetRecords = records.filter(r => {
-        if (r.dailyGoalAtThatDay == null) return false;
         if (r.date >= today) return false; // 今日以降は計算対象外
-        if (resetDate) {
-            // resetDate 以降のみを対象（リセット日を含む）
-            return r.date >= resetDate;
-        }
+        if (resetDate) return r.date >= resetDate;
         return true;
     });
-    
-    // 日付でソート、同じ日付の場合は timestamp でソート
+
+    // 日付でソート
     const sortedRecords = [...targetRecords].sort((a, b) => {
         const dateCompare = a.date.localeCompare(b.date);
         if (dateCompare !== 0) return dateCompare;
         return a.timestamp - b.timestamp;
     });
-    
-    // 日ごとに集計
+
+    // 日ごとに集計（earnedの合算、primary goalは getRecordPrimaryGoal で取得）
     const dailyMap = new Map<string, { earned: number; goal: number }>();
     for (const record of sortedRecords) {
         const existing = dailyMap.get(record.date);
-        const goal = getRecordDailyGoal(record, settings);
-        
+        const goal = getRecordPrimaryGoal(record, settings);
         if (existing) {
             existing.earned += record.earned;
-            existing.goal = goal;  // 常に上書き（後勝ち）
+            existing.goal = goal;
         } else {
             dailyMap.set(record.date, { earned: record.earned, goal });
         }
     }
-    
-    // 時系列で負債を計算
+
+    // 時系列で負債を計算（primaryのみを参照）
     let debt = 0;
     const sortedDays = Array.from(dailyMap.entries()).sort((a, b) => a[0].localeCompare(b[0]));
-    
+
     for (const [, { earned, goal }] of sortedDays) {
         if (earned < goal) {
-            // 不足分を負債に追加
             debt += (goal - earned);
         } else {
-            // 余剰分で負債を返済
             const surplus = earned - goal;
             debt = Math.max(0, debt - surplus);
         }
     }
-    
-    return debt;
+
+    return Math.max(0, debt);
 }
 
 // 履歴追加
@@ -232,7 +262,16 @@ export function addRecord(
 
     // レコード作成
     const recordDate = new Date(date);
-    const dailyGoalAtThatDay = getDailyGoalForDate(recordDate, data.settings);
+    const primaryGoalAtThatDay = getPrimaryGoalForDate(recordDate, data.settings);
+    // secondary は表示用に保存しておく
+    const secondaryGoalAtThatDay = (function () {
+        const sgArr = data.settings?.secondaryGoals;
+        if (Array.isArray(sgArr) && sgArr.length === 7) return sgArr[recordDate.getDay()] ?? 0;
+        if (typeof data.settings?.secondaryGoal === 'number') return data.settings.secondaryGoal;
+        // フォールバック: legacy dailyGoal + 固定差分
+        const base = data.settings?.dailyGoal ?? 0;
+        return (typeof data.settings?.secondaryGoal === 'number') ? data.settings.secondaryGoal : base + 100;
+    })();
     
     const record: CoinRecord = {
         id: generateId(),
@@ -244,7 +283,9 @@ export function addRecord(
         other: mode === 'other' ? Math.abs(diff) : 0,
         serebo: mode === 'serebo' ? Math.abs(diff) : 0,
         pick: mode === 'pick' ? Math.abs(diff) : 0,
-        dailyGoalAtThatDay, // その日の目標を保存
+        dailyGoalAtThatDay: primaryGoalAtThatDay, // 互換性のため旧フィールドにも primary を保存
+        primaryGoalAtThatDay,
+        secondaryGoalAtThatDay,
     };
 
     const newData: AppData = {
@@ -294,20 +335,41 @@ export function importData(json: string): { success: true; data: AppData } | { s
             }
         }
 
+        // settings のマッピング: 新仕様(primary/secondary)へ変換しつつ互換性を保つ
+        const parsedSettings: any = parsed.settings || {};
+        const primaryGoalVal = typeof parsedSettings?.primaryGoal === 'number'
+            ? parsedSettings.primaryGoal
+            : (typeof parsedSettings?.dailyGoal === 'number' ? parsedSettings.dailyGoal : 0);
+        const primaryGoalsVal = Array.isArray(parsedSettings?.primaryGoals)
+            ? parsedSettings.primaryGoals.map((v: any) => (typeof v === 'number' ? v : 0))
+            : (Array.isArray(parsedSettings?.dailyGoals) ? parsedSettings.dailyGoals.map((v: any) => (typeof v === 'number' ? v : 0)) : undefined);
+
+        const secondaryGoalVal = typeof parsedSettings?.secondaryGoal === 'number'
+            ? parsedSettings.secondaryGoal
+            : primaryGoalVal + 100;
+        const secondaryGoalsVal = Array.isArray(parsedSettings?.secondaryGoals)
+            ? parsedSettings.secondaryGoals.map((v: any) => (typeof v === 'number' ? v : 0))
+            : (primaryGoalsVal ? primaryGoalsVal.map((v: number) => v + 100) : undefined);
+
         const data: AppData = {
             initialCoinAmount: parsed.initialCoinAmount,
             records: parsed.records,
             settings: {
-                dailyGoal: typeof parsed.settings?.dailyGoal === 'number' ? parsed.settings.dailyGoal : 0,
-                dailyGoals: Array.isArray(parsed.settings?.dailyGoals)
-                    ? parsed.settings.dailyGoals.map((v: any) => (typeof v === 'number' ? v : 0))
-                    : undefined,
-                showGoalLine: typeof parsed.settings?.showGoalLine === 'boolean' ? parsed.settings.showGoalLine : true,
+                primaryGoal: primaryGoalVal,
+                primaryGoals: primaryGoalsVal,
+                secondaryGoal: secondaryGoalVal,
+                secondaryGoals: secondaryGoalsVal,
+                // 互換性のため旧フィールドも保存
+                dailyGoal: typeof parsedSettings?.dailyGoal === 'number' ? parsedSettings.dailyGoal : primaryGoalVal,
+                dailyGoals: Array.isArray(parsedSettings?.dailyGoals)
+                    ? parsedSettings.dailyGoals.map((v: any) => (typeof v === 'number' ? v : 0))
+                    : (primaryGoalsVal ? primaryGoalsVal : undefined),
+                showGoalLine: typeof parsedSettings?.showGoalLine === 'boolean' ? parsedSettings.showGoalLine : true,
                 ocrCrop: {
-                    left: typeof parsed.settings?.ocrCrop?.left === 'number' ? parsed.settings.ocrCrop.left : 40,
-                    top: typeof parsed.settings?.ocrCrop?.top === 'number' ? parsed.settings.ocrCrop.top : 17,
-                    right: typeof parsed.settings?.ocrCrop?.right === 'number' ? parsed.settings.ocrCrop.right : 70,
-                    bottom: typeof parsed.settings?.ocrCrop?.bottom === 'number' ? parsed.settings.ocrCrop.bottom : 22,
+                    left: typeof parsedSettings?.ocrCrop?.left === 'number' ? parsedSettings.ocrCrop.left : 40,
+                    top: typeof parsedSettings?.ocrCrop?.top === 'number' ? parsedSettings.ocrCrop.top : 17,
+                    right: typeof parsedSettings?.ocrCrop?.right === 'number' ? parsedSettings.ocrCrop.right : 70,
+                    bottom: typeof parsedSettings?.ocrCrop?.bottom === 'number' ? parsedSettings.ocrCrop.bottom : 22,
                 },
             },
         };

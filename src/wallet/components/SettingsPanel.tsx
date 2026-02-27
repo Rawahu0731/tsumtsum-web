@@ -3,8 +3,10 @@ import './SettingsPanel.css';
 import { loadData, saveData } from '../storage';
 
 export default function SettingsPanel({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
-    const [dailyGoal, setDailyGoal] = useState<number>(0);
-    const [dailyGoals, setDailyGoals] = useState<number[]>([0, 0, 0, 0, 0, 0, 0]);
+    const [primaryGoal, setPrimaryGoal] = useState<number>(0);
+    const [primaryGoals, setPrimaryGoals] = useState<number[]>([0, 0, 0, 0, 0, 0, 0]);
+    const [secondaryGoal, setSecondaryGoal] = useState<number>(100);
+    const [secondaryGoals, setSecondaryGoals] = useState<number[]>([100, 100, 100, 100, 100, 100, 100]);
     const [showGoalLine, setShowGoalLine] = useState<boolean>(true);
     const [showDebt, setShowDebt] = useState<boolean>(true);
     const [debtResetDate, setDebtResetDate] = useState<string>('');
@@ -16,15 +18,36 @@ export default function SettingsPanel({ isOpen, onClose }: { isOpen: boolean; on
     useEffect(() => {
         const data = loadData();
         if (data?.settings) {
-            setDailyGoal(data.settings.dailyGoal ?? 0);
             setShowGoalLine(data.settings.showGoalLine ?? true);
             setShowDebt(data.settings.showDebt ?? true);
             setDebtResetDate(data.settings.debtResetDate ?? '');
-            if (Array.isArray(data.settings.dailyGoals) && data.settings.dailyGoals.length === 7) {
-                setDailyGoals(data.settings.dailyGoals);
+            // primary
+            if (Array.isArray(data.settings.primaryGoals) && data.settings.primaryGoals.length === 7) {
+                setPrimaryGoals(data.settings.primaryGoals);
+                setPrimaryGoal(data.settings.primaryGoals[new Date().getDay()] ?? 0);
+            } else if (typeof data.settings.primaryGoal === 'number') {
+                setPrimaryGoal(data.settings.primaryGoal);
+                setPrimaryGoals(Array(7).fill(data.settings.primaryGoal));
+            } else if (Array.isArray(data.settings.dailyGoals) && data.settings.dailyGoals.length === 7) {
+                // 旧仕様を primary として扱う
+                setPrimaryGoals(data.settings.dailyGoals);
+                setPrimaryGoal(data.settings.dailyGoals[new Date().getDay()] ?? 0);
             } else {
-                // 互換性: 単一目標がある場合は全曜日に適用
-                setDailyGoals(Array(7).fill(data.settings.dailyGoal ?? 0));
+                setPrimaryGoal(data.settings.dailyGoal ?? 0);
+                setPrimaryGoals(Array(7).fill(data.settings.dailyGoal ?? 0));
+            }
+            // secondary
+            if (Array.isArray(data.settings.secondaryGoals) && data.settings.secondaryGoals.length === 7) {
+                setSecondaryGoals(data.settings.secondaryGoals);
+                setSecondaryGoal(data.settings.secondaryGoals[new Date().getDay()] ?? 0);
+            } else if (typeof data.settings.secondaryGoal === 'number') {
+                setSecondaryGoal(data.settings.secondaryGoal);
+                setSecondaryGoals(Array(7).fill(data.settings.secondaryGoal));
+            } else {
+                // 初期化: primary + 固定差分(100)
+                const base = (typeof data.settings.primaryGoal === 'number') ? data.settings.primaryGoal : (data.settings.dailyGoal ?? 0);
+                setSecondaryGoal(base + 100);
+                setSecondaryGoals(Array(7).fill(base + 100));
             }
             const crop = data.settings.ocrCrop;
             setOcrLeft(crop?.left ?? 50);
@@ -51,10 +74,23 @@ export default function SettingsPanel({ isOpen, onClose }: { isOpen: boolean; on
     }, [showDebt, debtResetDate]);
 
     function handleSave() {
+        // バリデーション
+        if ((Number(primaryGoal) || 0) <= 0) {
+            alert('第一段階目標は0より大きい値を入力してください。');
+            return;
+        }
+        if ((Number(secondaryGoal) || 0) <= Number(primaryGoal)) {
+            alert('第二段階目標は第一段階目標より大きい値を入力してください。');
+            return;
+        }
+
         const data = loadData() || { initialCoinAmount: 0, records: [], settings: {} };
         data.settings = {
-            dailyGoal: Number(dailyGoal) || dailyGoals[new Date().getDay()] || 0,
-            dailyGoals: dailyGoals.map((v) => Number(v) || 0),
+            // primary / secondary を保存
+            primaryGoal: Number(primaryGoal) || primaryGoals[new Date().getDay()] || 0,
+            primaryGoals: primaryGoals.map((v) => Number(v) || 0),
+            secondaryGoal: Number(secondaryGoal) || secondaryGoals[new Date().getDay()] || 0,
+            secondaryGoals: secondaryGoals.map((v) => Number(v) || 0),
             showGoalLine: !!showGoalLine,
             showDebt: !!showDebt,
             debtResetDate: debtResetDate || undefined,
@@ -64,6 +100,9 @@ export default function SettingsPanel({ isOpen, onClose }: { isOpen: boolean; on
                 right: Number(ocrRight) || 67,
                 bottom: Number(ocrBottom) || 20,
             },
+            // 互換性のため旧フィールドに primary を入れておく
+            dailyGoal: Number(primaryGoal) || primaryGoals[new Date().getDay()] || 0,
+            dailyGoals: primaryGoals.map((v) => Number(v) || 0),
         };
         saveData(data);
         // notify other parts of app
@@ -90,22 +129,47 @@ export default function SettingsPanel({ isOpen, onClose }: { isOpen: boolean; on
 
             <div className="settings-panel__body">
                 <div className="settings-row">
-                    <div className="settings-row__label">曜日別のコイン目標</div>
+                    <div className="settings-row__label">曜日別の目標（第一 / 第二）</div>
                     <div className="weekday-goals">
+                        <div className="weekday-goals__header">
+                            <div className="weekday-goals__label">曜日</div>
+                            <div className="weekday-goals__col-header">第一段階</div>
+                            <div className="weekday-goals__col-header">第二段階</div>
+                        </div>
                         {['日','月','火','水','木','金','土'].map((label, idx) => (
-                            <label key={label} className="weekday-goals__item">
+                            <div key={label} className="weekday-goals__item">
                                 <div className="weekday-goals__label">{label}</div>
-                                <input
-                                    type="number"
-                                    min={0}
-                                    value={dailyGoals[idx]}
-                                    onChange={(e) => {
-                                        const next = [...dailyGoals];
-                                        next[idx] = Number(e.target.value) || 0;
-                                        setDailyGoals(next);
-                                    }}
-                                />
-                            </label>
+                                <div className="weekday-goals__cell">
+                                    <div className="weekday-goals__hint">第一</div>
+                                    <input
+                                        className="weekday-goals__input"
+                                        type="number"
+                                        min={0}
+                                        value={primaryGoals[idx]}
+                                        onChange={(e) => {
+                                            const next = [...primaryGoals];
+                                            next[idx] = Number(e.target.value) || 0;
+                                            setPrimaryGoals(next);
+                                            setPrimaryGoal(next[new Date().getDay()]);
+                                        }}
+                                    />
+                                </div>
+                                <div className="weekday-goals__cell">
+                                    <div className="weekday-goals__hint">第二</div>
+                                    <input
+                                        className="weekday-goals__input"
+                                        type="number"
+                                        min={0}
+                                        value={secondaryGoals[idx]}
+                                        onChange={(e) => {
+                                            const next = [...secondaryGoals];
+                                            next[idx] = Number(e.target.value) || 0;
+                                            setSecondaryGoals(next);
+                                            setSecondaryGoal(next[new Date().getDay()]);
+                                        }}
+                                    />
+                                </div>
+                            </div>
                         ))}
                     </div>
                 </div>
