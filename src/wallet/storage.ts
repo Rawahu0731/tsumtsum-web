@@ -1,5 +1,5 @@
 import type { AppData, CoinRecord, RecordMode } from './types';
-import { format } from 'date-fns';
+import { format, startOfWeek, endOfWeek } from 'date-fns';
 
 const STORAGE_KEY = 'tsumtsum-wallet-data';
 const SESSION_KEY = 'tsumtsum-session-records';
@@ -78,8 +78,9 @@ export function initializeData(initialCoinAmount: number): AppData {
             dailyGoal: 0,
             dailyGoals: [0, 0, 0, 0, 0, 0, 0],
             showGoalLine: true,
-            // デフォルトで負債を表示する
-            showDebt: true,
+            // 週目標（第一段階 / 第二段階）
+            weeklyPrimaryGoal: 0,
+            weeklySecondaryGoal: 0,
             ocrCrop: {
                 left: 40,
                 top: 17,
@@ -176,53 +177,11 @@ export function getSecondaryGoalForDate(date: Date, settings?: AppData['settings
     return primary + 100;
 }
 
-// 負債計算（累積型）
-export function calculateDebt(records: CoinRecord[], settings?: AppData['settings']): number {
-    // 今日の日付（YYYY-MM-DD形式）
-    const today = format(new Date(), 'yyyy-MM-dd');
-    const resetDate = settings?.debtResetDate;
-
-    // 今日より前、かつ（リセット日があればリセット日以降）のレコードを対象にする
-    const targetRecords = records.filter(r => {
-        if (r.date >= today) return false; // 今日以降は計算対象外
-        if (resetDate) return r.date >= resetDate;
-        return true;
-    });
-
-    // 日付でソート
-    const sortedRecords = [...targetRecords].sort((a, b) => {
-        const dateCompare = a.date.localeCompare(b.date);
-        if (dateCompare !== 0) return dateCompare;
-        return a.timestamp - b.timestamp;
-    });
-
-    // 日ごとに集計（earnedの合算、primary goalは getRecordPrimaryGoal で取得）
-    const dailyMap = new Map<string, { earned: number; goal: number }>();
-    for (const record of sortedRecords) {
-        const existing = dailyMap.get(record.date);
-        const goal = getRecordPrimaryGoal(record, settings);
-        if (existing) {
-            existing.earned += record.earned;
-            existing.goal = goal;
-        } else {
-            dailyMap.set(record.date, { earned: record.earned, goal });
-        }
-    }
-
-    // 時系列で負債を計算（primaryのみを参照）
-    let debt = 0;
-    const sortedDays = Array.from(dailyMap.entries()).sort((a, b) => a[0].localeCompare(b[0]));
-
-    for (const [, { earned, goal }] of sortedDays) {
-        if (earned < goal) {
-            debt += (goal - earned);
-        } else {
-            const surplus = earned - goal;
-            debt = Math.max(0, debt - surplus);
-        }
-    }
-
-    return Math.max(0, debt);
+// 今週の獲得コイン合計を計算（週の定義: 月曜始まり）
+export function getThisWeekEarned(records: CoinRecord[], now: Date = new Date()): number {
+    const weekStart = format(startOfWeek(now, { weekStartsOn: 1 }), 'yyyy-MM-dd');
+    const weekEnd = format(endOfWeek(now, { weekStartsOn: 1 }), 'yyyy-MM-dd');
+    return records.reduce((acc, r) => (r.date >= weekStart && r.date <= weekEnd ? acc + r.earned : acc), 0);
 }
 
 // 履歴追加
@@ -351,6 +310,13 @@ export function importData(json: string): { success: true; data: AppData } | { s
             ? parsedSettings.secondaryGoals.map((v: any) => (typeof v === 'number' ? v : 0))
             : (primaryGoalsVal ? primaryGoalsVal.map((v: number) => v + 100) : undefined);
 
+        const weeklyPrimaryGoalVal = typeof parsedSettings?.weeklyPrimaryGoal === 'number'
+            ? parsedSettings.weeklyPrimaryGoal
+            : 0;
+        const weeklySecondaryGoalVal = typeof parsedSettings?.weeklySecondaryGoal === 'number'
+            ? parsedSettings.weeklySecondaryGoal
+            : (weeklyPrimaryGoalVal > 0 ? weeklyPrimaryGoalVal + 100 : 0);
+
         const data: AppData = {
             initialCoinAmount: parsed.initialCoinAmount,
             records: parsed.records,
@@ -365,6 +331,8 @@ export function importData(json: string): { success: true; data: AppData } | { s
                     ? parsedSettings.dailyGoals.map((v: any) => (typeof v === 'number' ? v : 0))
                     : (primaryGoalsVal ? primaryGoalsVal : undefined),
                 showGoalLine: typeof parsedSettings?.showGoalLine === 'boolean' ? parsedSettings.showGoalLine : true,
+                weeklyPrimaryGoal: weeklyPrimaryGoalVal,
+                weeklySecondaryGoal: weeklySecondaryGoalVal,
                 ocrCrop: {
                     left: typeof parsedSettings?.ocrCrop?.left === 'number' ? parsedSettings.ocrCrop.left : 40,
                     top: typeof parsedSettings?.ocrCrop?.top === 'number' ? parsedSettings.ocrCrop.top : 17,

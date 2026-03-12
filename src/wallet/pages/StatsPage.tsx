@@ -12,7 +12,7 @@ import {
 } from 'date-fns';
 import { ja } from 'date-fns/locale';
 import type { AppData, CoinRecord, PeriodStats } from '../types';
-import { loadData, exportData, importData, getLastCoinAmount, calculateDebt, getRecordDailyGoal, getRecordSecondaryGoal, getSecondaryGoalForDate } from '../storage';
+import { loadData, exportData, importData, getLastCoinAmount, getThisWeekEarned, getRecordDailyGoal, getRecordSecondaryGoal, getSecondaryGoalForDate } from '../storage';
 import Calendar from '../components/Calendar';
 import TodayHero from '../components/TodayHero';
 import './StatsPage.css';
@@ -220,11 +220,9 @@ export default function StatsPage() {
         return monthRecords.reduce((acc, r) => acc + r.earned, 0);
     }, [records]);
 
-    // 負債を計算
-    const currentDebt = useMemo(() => {
-        if (!appData) return 0;
-        return calculateDebt(appData.records, appData.settings);
-    }, [appData]);
+    const thisWeekEarned = useMemo(() => {
+        return getThisWeekEarned(records);
+    }, [records]);
 
     const currentCoins = appData ? getLastCoinAmount(appData) : 0;
     const targetTotal = currentCoins + remainingToPrimary;
@@ -629,22 +627,81 @@ export default function StatsPage() {
                     </div>
                 </section>
 
-                {/* 負債（専用セクション） */}
-                {(appData?.settings?.showDebt ?? true) && currentDebt > 0 && (
-                    <section className="stats-section">
-                        <h3 className="stats-section__title">昨日までの負債</h3>
-                        <div className="stats-card">
-                            <div className="stats-section__debt">
-                                <div style={{ fontSize: '18px', color: '#dc2626', fontWeight: 'bold' }}>
-                                    {formatNumber(currentDebt)} コイン
-                                </div>
-                                <div style={{ marginTop: '8px', fontSize: '13px', color: '#6b7280' }}>
-                                    ※今日の進捗は反映されません。昨日までの負債です。
+                {/* 今週の進捗（週目標） */}
+                <section className="stats-section">
+                    <h3 className="stats-section__title">今週の進捗</h3>
+                    <div className="stats-card">
+                        <div className="weekly-progress">
+                            <div className="weekly-progress__summary">
+                                <div className="weekly-progress__value">+{formatNumber(thisWeekEarned)} コイン</div>
+                                {/* 達成率は第一段階基準 */}
+                                <div className="weekly-progress__rate">
+                                    {(() => {
+                                        const wp = appData?.settings?.weeklyPrimaryGoal ?? 0;
+                                        const rate = wp > 0 ? (thisWeekEarned / wp) * 100 : 0;
+                                        return `${Math.round(rate * 10) / 10}%`;
+                                    })()}
                                 </div>
                             </div>
+
+                            <div className="weekly-progress__bar" aria-hidden>
+                                {(() => {
+                                    const wp = appData?.settings?.weeklyPrimaryGoal ?? 0;
+                                    let ws = appData?.settings?.weeklySecondaryGoal ?? 0;
+                                    if (ws <= wp) ws = wp + 100;
+                                    const fillPercent = ws > 0 ? Math.min(100, (thisWeekEarned / ws) * 100) : 0;
+                                    const primaryPercent = ws > 0 ? Math.min(100, (wp / ws) * 100) : 0;
+                                    return (
+                                        <>
+                                            <div className="weekly-progress__fill" style={{ width: `${fillPercent}%` }} />
+                                            <div className="weekly-progress__marker weekly-progress__marker--primary" style={{ left: `${primaryPercent}%` }} />
+                                            <div className="weekly-progress__marker weekly-progress__marker--secondary" style={{ left: `100%` }} />
+                                        </>
+                                    );
+                                })()}
+                            </div>
+
+                            <div className="weekly-progress__info">
+                                {(() => {
+                                    const wp = appData?.settings?.weeklyPrimaryGoal ?? 0;
+                                    let ws = appData?.settings?.weeklySecondaryGoal ?? 0;
+                                    if (ws <= wp) ws = wp + 100;
+                                    if (wp <= 0) return <div className="empty-state">週目標が設定されていません。</div>;
+                                    if (thisWeekEarned < wp) {
+                                        const remaining = wp - thisWeekEarned;
+                                        const rate = Math.round((thisWeekEarned / wp) * 1000) / 10;
+                                        return (
+                                            <div>
+                                                <div>第一段階目標: {formatNumber(wp)} コイン</div>
+                                                <div>第一段階まであと {formatNumber(remaining)} コイン</div>
+                                                <div style={{ marginTop: 6, color: '#666' }}>達成率: {rate}%</div>
+                                            </div>
+                                        );
+                                    }
+                                    if (thisWeekEarned >= wp && thisWeekEarned < ws) {
+                                        const remaining = ws - thisWeekEarned;
+                                        const rate = Math.round((thisWeekEarned / wp) * 1000) / 10;
+                                        return (
+                                            <div>
+                                                <div>第二段階目標: {formatNumber(ws)} コイン</div>
+                                                <div>第二段階まであと {formatNumber(remaining)} コイン</div>
+                                                <div style={{ marginTop: 6, color: '#666' }}>達成率: {rate}%</div>
+                                            </div>
+                                        );
+                                    }
+                                    // 第二段階達成
+                                    const rate = Math.round((thisWeekEarned / wp) * 1000) / 10;
+                                    return (
+                                        <div>
+                                            <div>達成率: {rate}%</div>
+                                            <div style={{ marginTop: 6, color: '#059669', fontWeight: 600 }}>第二段階達成</div>
+                                        </div>
+                                    );
+                                })()}
+                            </div>
                         </div>
-                    </section>
-                )}
+                    </div>
+                </section>
 
             {/* 月別統計 */}
             {monthlyStats.length > 0 && (

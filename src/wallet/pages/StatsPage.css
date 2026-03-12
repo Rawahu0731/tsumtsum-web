@@ -344,6 +344,62 @@
     padding: 16px;
 }
 
+/* 今週の進捗（リボン型プログレス） */
+.weekly-progress {
+    padding: 16px;
+}
+.weekly-progress__summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+.weekly-progress__value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #111;
+}
+.weekly-progress__rate {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #059669;
+}
+.weekly-progress__bar {
+    position: relative;
+    height: 28px;
+    background: linear-gradient(90deg,#f3f4f6,#f8fafc);
+    border-radius: 14px;
+    overflow: hidden;
+}
+.weekly-progress__fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    background: linear-gradient(90deg,#10b981,#059669);
+    border-radius: 14px 0 0 14px;
+    transition: width 0.5s ease;
+}
+.weekly-progress__marker {
+    position: absolute;
+    top: -6px;
+    width: 2px;
+    height: 40px;
+    transform: translateX(-50%);
+}
+.weekly-progress__marker--primary {
+    background: #16a34a;
+}
+.weekly-progress__marker--secondary {
+    background: #D4AF37;
+}
+.weekly-progress__info {
+    margin-top: 12px;
+    font-size: 0.95rem;
+    color: #444;
+}
+
 /* レスポンシブ */
 @media (max-width: 768px) {
     .stats-page__content {

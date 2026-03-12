@@ -8,8 +8,8 @@ export default function SettingsPanel({ isOpen, onClose }: { isOpen: boolean; on
     const [secondaryGoal, setSecondaryGoal] = useState<number>(100);
     const [secondaryGoals, setSecondaryGoals] = useState<number[]>([100, 100, 100, 100, 100, 100, 100]);
     const [showGoalLine, setShowGoalLine] = useState<boolean>(true);
-    const [showDebt, setShowDebt] = useState<boolean>(true);
-    const [debtResetDate, setDebtResetDate] = useState<string>('');
+    const [weeklyPrimaryGoal, setWeeklyPrimaryGoal] = useState<number>(0);
+    const [weeklySecondaryGoal, setWeeklySecondaryGoal] = useState<number>(0);
     const [ocrLeft, setOcrLeft] = useState<number>(50);
     const [ocrTop, setOcrTop] = useState<number>(17);
     const [ocrRight, setOcrRight] = useState<number>(67);
@@ -19,8 +19,11 @@ export default function SettingsPanel({ isOpen, onClose }: { isOpen: boolean; on
         const data = loadData();
         if (data?.settings) {
             setShowGoalLine(data.settings.showGoalLine ?? true);
-            setShowDebt(data.settings.showDebt ?? true);
-            setDebtResetDate(data.settings.debtResetDate ?? '');
+            setWeeklyPrimaryGoal(typeof data.settings.weeklyPrimaryGoal === 'number' ? data.settings.weeklyPrimaryGoal : 0);
+            setWeeklySecondaryGoal(typeof data.settings.weeklySecondaryGoal === 'number'
+                ? data.settings.weeklySecondaryGoal
+                : (typeof data.settings.weeklyPrimaryGoal === 'number' ? data.settings.weeklyPrimaryGoal + 100 : 0)
+            );
             // primary
             if (Array.isArray(data.settings.primaryGoals) && data.settings.primaryGoals.length === 7) {
                 setPrimaryGoals(data.settings.primaryGoals);
@@ -57,21 +60,7 @@ export default function SettingsPanel({ isOpen, onClose }: { isOpen: boolean; on
         }
     }, [isOpen]);
 
-    // showDebt / debtResetDate を localStorage と即時同期
-    useEffect(() => {
-        try {
-            const data = loadData() || { initialCoinAmount: 0, records: [], settings: {} };
-            data.settings = {
-                ...(data.settings || {}),
-                showDebt: !!showDebt,
-                debtResetDate: debtResetDate || undefined,
-            };
-            saveData(data);
-            window.dispatchEvent(new CustomEvent('tsumtsum-data-changed'));
-        } catch {
-            // ignore
-        }
-    }, [showDebt, debtResetDate]);
+    // (週目標は保存時にまとめて保存します)
 
     function handleSave() {
         // バリデーション
@@ -83,6 +72,14 @@ export default function SettingsPanel({ isOpen, onClose }: { isOpen: boolean; on
             alert('第二段階目標は第一段階目標より大きい値を入力してください。');
             return;
         }
+        if ((Number(weeklyPrimaryGoal) || 0) <= 0) {
+            alert('週目標（第一段階）は0より大きい値を入力してください。');
+            return;
+        }
+        if ((Number(weeklySecondaryGoal) || 0) <= Number(weeklyPrimaryGoal)) {
+            alert('週目標（第二段階）は第一段階より大きい値を入力してください。');
+            return;
+        }
 
         const data = loadData() || { initialCoinAmount: 0, records: [], settings: {} };
         data.settings = {
@@ -92,8 +89,8 @@ export default function SettingsPanel({ isOpen, onClose }: { isOpen: boolean; on
             secondaryGoal: Number(secondaryGoal) || secondaryGoals[new Date().getDay()] || 0,
             secondaryGoals: secondaryGoals.map((v) => Number(v) || 0),
             showGoalLine: !!showGoalLine,
-            showDebt: !!showDebt,
-            debtResetDate: debtResetDate || undefined,
+            weeklyPrimaryGoal: Number(weeklyPrimaryGoal) || 0,
+            weeklySecondaryGoal: Number(weeklySecondaryGoal) || 0,
             ocrCrop: {
                 left: Number(ocrLeft) || 50,
                 top: Number(ocrTop) || 17,
@@ -110,15 +107,7 @@ export default function SettingsPanel({ isOpen, onClose }: { isOpen: boolean; on
         onClose();
     }
 
-    function handleResetDebt() {
-        const ok = window.confirm('本当に負債をリセットしますか？');
-        if (!ok) return;
-        const today = new Date();
-        const ymd = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-        setDebtResetDate(ymd);
-        setShowDebt(true);
-        // useEffect will persist the change
-    }
+    // debt-related functions removed
 
     return (
         <aside className={`settings-panel ${isOpen ? 'settings-panel--open' : ''}`}>
@@ -184,23 +173,18 @@ export default function SettingsPanel({ isOpen, onClose }: { isOpen: boolean; on
                 </label>
 
                 <label className="settings-row">
-                    <div className="settings-row__label">負債を表示する</div>
-                    <input
-                        type="checkbox"
-                        checked={showDebt}
-                        onChange={(e) => setShowDebt(e.target.checked)}
-                    />
-                </label>
-
-                <div className="settings-row">
-                    <div className="settings-row__label">負債リセット</div>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                        <button className="btn btn--ghost" onClick={handleResetDebt}>負債をリセット</button>
-                        {debtResetDate && (
-                            <div style={{ marginTop: 6, fontSize: 12, color: '#6b7280' }}>リセット日: {debtResetDate}</div>
-                        )}
+                    <div className="settings-row__label">週目標</div>
+                    <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                            <div style={{ fontSize: 12 }}>Weekly Goal – 第一段階</div>
+                            <input type="number" min={0} value={weeklyPrimaryGoal} onChange={(e) => setWeeklyPrimaryGoal(Number(e.target.value) || 0)} />
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                            <div style={{ fontSize: 12 }}>Weekly Goal – 第二段階</div>
+                            <input type="number" min={0} value={weeklySecondaryGoal} onChange={(e) => setWeeklySecondaryGoal(Number(e.target.value) || 0)} />
+                        </div>
                     </div>
-                </div>
+                </label>
 
                 <div className="settings-row">
                     <div className="settings-row__label">画像OCRの切り取り（単位: %）</div>
