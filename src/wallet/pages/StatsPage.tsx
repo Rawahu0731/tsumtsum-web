@@ -210,6 +210,12 @@ export default function StatsPage() {
         const remainingToPrimary = Math.max(0, todayPrimary - todayStats.earned);
         const remainingToSecondary = Math.max(0, todaySecondary - todayStats.earned);
 
+        // 表示する目標（第一段階/第二段階/達成済み）を切替えるためのフラグと値
+        const inPrimaryPhase = todayStats.earned < todayPrimary;
+        const inSecondaryPhase = todaySecondary > 0 && todayStats.earned >= todayPrimary && todayStats.earned < todaySecondary;
+        const displayedGoal = inPrimaryPhase ? todayPrimary : (inSecondaryPhase ? todaySecondary : 0);
+        const remainingToDisplayedGoal = Math.max(0, displayedGoal - todayStats.earned);
+
     // 今月の合計を計算
     const thisMonthStats = useMemo(() => {
         const now = new Date();
@@ -225,7 +231,7 @@ export default function StatsPage() {
     }, [records]);
 
     const currentCoins = appData ? getLastCoinAmount(appData) : 0;
-    const targetTotal = currentCoins + remainingToPrimary;
+    const targetTotal = currentCoins + remainingToDisplayedGoal;
 
     const chartData = useMemo(() => {
         const labels = last7.labels;
@@ -600,9 +606,11 @@ export default function StatsPage() {
                 <section className="stats-section">
                     <h3 className="stats-section__title">目標</h3>
                     <div className="stats-card">
-                                {(appData?.settings?.showGoalLine && (todayPrimary ?? 0) > 0) ? (
+                                {(appData?.settings?.showGoalLine && ((todayPrimary ?? 0) > 0 || (todaySecondary ?? 0) > 0)) ? (
                                     <div className="stats-section__goal">
-                                        <div>第一段階目標: {formatNumber(todayPrimary ?? 0)} コイン</div>
+                                        {displayedGoal > 0 ? (
+                                            <div>{inPrimaryPhase ? '第一段階目標' : '第二段階目標'}: {formatNumber(displayedGoal)} コイン</div>
+                                        ) : null}
 
                                         {todayStats.earned < todayPrimary ? (
                                             <div className="stats-section__today">
@@ -618,8 +626,9 @@ export default function StatsPage() {
                                                 <Sparkles />
                                             </div>
                                         )}
-
-                                        <div className="stats-section__target">現在 {formatNumber(currentCoins)} → 合計 {formatNumber(targetTotal)} コイン</div>
+                                        {displayedGoal > 0 && (
+                                            <div className="stats-section__target">現在 {formatNumber(currentCoins)} → 合計 {formatNumber(targetTotal)} コイン</div>
+                                        )}
                                     </div>
                                 ) : (
                                     <div className="empty-state">目標が設定されていません。</div>
