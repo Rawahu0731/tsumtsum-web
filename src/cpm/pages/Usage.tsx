@@ -1,12 +1,23 @@
 
 import { useNavigate } from 'react-router-dom'
 
-export default function Usage() {
+type Props = {
+  onBack?: () => void;
+};
+
+export default function Usage({ onBack }: Props) {
   const navigate = useNavigate()
+  const handleBack = () => {
+    if (onBack) {
+      onBack()
+      return
+    }
+    navigate('/cpm')
+  }
   return (
     <div style={{ padding: 16 }}>
       <div style={{ marginBottom: 12 }}>
-        <button onClick={() => navigate('/cpm')}>ホームへ戻る</button>
+        <button onClick={handleBack}>ホームへ戻る</button>
       </div>
       <h1>使い方</h1>
       <p>このアプリは「一分あたりのコイン効率 (CPM)」を計算するツールです。基本的な使い方：</p>

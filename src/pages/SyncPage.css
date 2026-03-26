@@ -1,0 +1,125 @@
+.sync-page {
+  display: flex;
+  justify-content: center;
+  padding: 24px 0;
+}
+
+.sync-card {
+  width: min(720px, 100%);
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 20px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+}
+
+.sync-title {
+  margin: 0 0 16px;
+  font-size: 24px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.sync-status {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.sync-user {
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.sync-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.btn-primary,
+.btn-secondary,
+.btn-ghost {
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.15s ease;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #0ea5e9, #6366f1);
+  color: #ffffff;
+  box-shadow: 0 10px 20px rgba(14, 165, 233, 0.3);
+}
+
+.btn-primary:disabled,
+.btn-secondary:disabled,
+.btn-ghost:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+.btn-secondary {
+  background: #0f172a;
+  color: #ffffff;
+  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.25);
+}
+
+.btn-ghost {
+  background: #f1f5f9;
+  color: #0f172a;
+  border: 1px solid #e2e8f0;
+}
+
+.btn-primary:not(:disabled):active,
+.btn-secondary:not(:disabled):active,
+.btn-ghost:not(:disabled):active {
+  transform: translateY(1px);
+}
+
+.sync-remaining {
+  margin-top: 8px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.sync-message {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.sync-message--ok {
+  background: #ecfeff;
+  color: #0f172a;
+  border: 1px solid #67e8f9;
+}
+
+.sync-message--error {
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecdd3;
+}
+
+@media (max-width: 640px) {
+  .sync-card {
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  .sync-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .sync-actions button {
+    width: 100%;
+  }
+}

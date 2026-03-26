@@ -1,11 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
-import { useNavigate, Routes, Route } from 'react-router-dom';
 import './index.css'
 import './App.css'
 import Usage from './pages/Usage'
 
 function CpmMain() {
-  const navigate = useNavigate();
   const [time, setTime] = useState('00:00');
   const [coins, setCoins] = useState(0);
   const [result, setResult] = useState<number | null>(null);
@@ -20,6 +18,7 @@ function CpmMain() {
   const [entries, setEntries] = useState<Array<{ character: string; skill: number; cpm: number; ts: number; time?: string; coins?: number; items: { score: boolean; coin: boolean; exp: boolean; timeItem: boolean; bomb: boolean; fivetofour: boolean } }>>([]);
   const [importError, setImportError] = useState<string | null>(null);
   const [isOpening, setIsOpening] = useState(false);
+  const [showUsage, setShowUsage] = useState(false);
 
   const handleCalcClick = () => {
     const timeParts = time.split(':');
@@ -43,33 +42,30 @@ function CpmMain() {
   useEffect(() => {
     try {
       const raw = localStorage.getItem('cpm_entries');
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed)) {
-          const normalized = parsed.map((e: any) => ({
-            character: String(e.character || ''),
-            skill: Number(e.skill || 1),
-            cpm: Number(e.cpm || 0),
-            ts: Number(e.ts || Date.now()),
-            time: String(e.time || '00:00'),
-            coins: Number(e.coins || e.coins === 0 ? e.coins : (e.coins === undefined ? 0 : Number(e.coins))),
-            items: e.items || {
-              score: !!e.score,
-              coin: e.coin === undefined ? true : !!e.coin,
-              exp: !!e.exp,
-              timeItem: !!e.timeItem,
-              bomb: !!e.bomb,
-              fivetofour: e.fivetofour === undefined ? true : !!e.fivetofour,
-            }
-          }));
-          setEntries(normalized as any);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return;
+      const normalized = parsed.map((e: any) => ({
+        character: String(e.character || ''),
+        skill: Number(e.skill || 1),
+        cpm: Number(e.cpm || 0),
+        ts: Number(e.ts || Date.now()),
+        time: String(e.time || '00:00'),
+        coins: Number(e.coins || e.coins === 0 ? e.coins : (e.coins === undefined ? 0 : Number(e.coins))),
+        items: e.items || {
+          score: !!e.score,
+          coin: e.coin === undefined ? true : !!e.coin,
+          exp: !!e.exp,
+          timeItem: !!e.timeItem,
+          bomb: !!e.bomb,
+          fivetofour: e.fivetofour === undefined ? true : !!e.fivetofour,
         }
-      }
+      }));
+      setEntries(normalized as any);
     } catch (e) {
       console.error('failed to load entries', e);
     }
   }, []);
-
   function itemsKey(it: { score: boolean; coin: boolean; exp: boolean; timeItem: boolean; bomb: boolean; fivetofour: boolean }) {
     return `S:${it.score ? 1 : 0}|C:${it.coin ? 1 : 0}|E:${it.exp ? 1 : 0}|T:${it.timeItem ? 1 : 0}|B:${it.bomb ? 1 : 0}|F:${it.fivetofour ? 1 : 0}`;
   }
@@ -252,11 +248,21 @@ function CpmMain() {
       </header>
 
       <nav className="nav-bar">
-        <button onClick={() => navigate('usage')}>Usage</button>
+        <button onClick={() => setShowUsage(true)}>Usage</button>
         <button onClick={handleExportJSON}>Export Data</button>
         <button onClick={handleImportClick}>Import JSON</button>
         <input ref={fileInputRef} type="file" accept="application/json" style={{ display: 'none' }} onChange={handleFileChange} />
       </nav>
+
+      {showUsage && (
+        <div className="card">
+          <div className="card-header">
+            <h2>How to use</h2>
+            <button className="btn btn-ghost" onClick={() => setShowUsage(false)}>Close</button>
+          </div>
+          <Usage onBack={() => setShowUsage(false)} />
+        </div>
+      )}
 
       {importError && (
         <div style={{
@@ -479,14 +485,8 @@ function CpmMain() {
   )
 }
 
-export default function App() {
-  return (
-    <Routes>
-      <Route path="/" element={<CpmMain />} />
-      <Route path="usage" element={<Usage />} />
-    </Routes>
-  )
-}
+export { CpmMain };
+export default CpmMain;
 
 
 function Stopwatch({ onApply }: { onApply: (time: string) => void }) {

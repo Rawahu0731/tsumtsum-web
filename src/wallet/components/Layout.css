@@ -7,7 +7,7 @@
 .layout__main {
   flex: 1;
   padding: 16px 8px;
-  padding-bottom: 80px;
+  padding-bottom: 160px; /* leave room for wallet tabbar + global tabbar */
 }
 
 /* PC Header */
@@ -106,7 +106,7 @@
 .tabbar {
   display: flex;
   position: fixed;
-  bottom: 0;
+  bottom: 64px; /* sit above global tabbar on mobile */
   left: 0;
   right: 0;
   background: rgba(255, 255, 255, 0.95);

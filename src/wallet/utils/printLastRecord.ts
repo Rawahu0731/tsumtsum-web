@@ -5,8 +5,7 @@
 
 export function printLastRecordFromLocalStorage(): any | null {
     try {
-        const key = 'tsumtsum-wallet-data';
-        const json = localStorage.getItem(key);
+        const json = localStorage.getItem('tsumtsum-wallet-data');
         if (!json) {
             console.warn('No tsumtsum wallet data found in localStorage.');
             return null;

@@ -1,17 +1,20 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
+import Layout from './components/Layout';
 import Home from './pages/Home';
-import CpmApp from './cpm/App';
-import WalletRoutes from './wallet/App';
+import { CpmMain } from './cpm/App';
+import WalletApp from './wallet/App';
+import SyncPage from './pages/SyncPage';
 import './App.css';
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/cpm/*" element={<CpmApp />} />
-        <Route path="/wallet/*" element={<WalletRoutes />} />
-      </Routes>
-    </BrowserRouter>
+    <Routes>
+      <Route path="/" element={<Layout />}>
+        <Route index element={<Home />} />
+        <Route path="cpm" element={<CpmMain />} />
+        <Route path="wallet/*" element={<WalletApp />} />
+        <Route path="sync" element={<SyncPage />} />
+      </Route>
+    </Routes>
   );
 }
