@@ -34,16 +34,28 @@ export default defineConfig({
         ],
       },
       workbox: {
+        // Claim and activate the latest service worker immediately so new deployments take effect.
+        clientsClaim: true,
+        skipWaiting: true,
         runtimeCaching: [
           {
+            // Always prefer network for the HTML shell to avoid serving stale pages from cache.
+            urlPattern: ({ request }) => request.destination === 'document',
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'html-cache',
+              networkTimeoutSeconds: 10,
+            },
+          },
+          {
+            // Static assets (scripts/styles/images) can stay cache-first since they are fingerprinted by Vite.
             urlPattern: ({ request }) =>
-              request.destination === 'document' ||
               request.destination === 'script' ||
               request.destination === 'style' ||
               request.destination === 'image',
             handler: 'CacheFirst',
             options: {
-              cacheName: 'app-cache',
+              cacheName: 'asset-cache',
               expiration: {
                 maxEntries: 100,
                 maxAgeSeconds: 60 * 60 * 24 * 30,

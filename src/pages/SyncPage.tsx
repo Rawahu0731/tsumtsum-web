@@ -10,6 +10,7 @@ const SYNC_COUNT_KEY = 'syncCount';
 const SYNC_DATE_KEY = 'syncDate';
 const WALLET_KEY = 'tsumtsum-wallet-data';
 const CPM_KEY = 'cpm_entries';
+const TSUMCOUNT_KEY = 'tsum-count-state-v1';
 
 type SyncState = {
   user: User | null;
@@ -104,17 +105,20 @@ export default function SyncPage() {
 
     const walletRaw = localStorage.getItem(WALLET_KEY);
     const cpmRaw = localStorage.getItem(CPM_KEY);
+    const tsumCountRaw = localStorage.getItem(TSUMCOUNT_KEY);
     const walletData = walletRaw ? JSON.parse(walletRaw) : {};
     const cpmData = cpmRaw ? JSON.parse(cpmRaw) : [];
+    const tsumCountData = tsumCountRaw ? JSON.parse(tsumCountRaw) : {};
 
     console.log('wallet:', walletData);
     console.log('cpm:', cpmData);
+    console.log('tsumCount:', tsumCountData);
 
     setIsSaving(true);
     setStatus('クラウドに保存中…');
     try {
       const ref = doc(db, 'users', context.user.uid);
-      await setDoc(ref, { wallet: walletData, cpm: cpmData, updatedAt: serverTimestamp() });
+      await setDoc(ref, { wallet: walletData, cpm: cpmData, tsumCount: tsumCountData, updatedAt: serverTimestamp() });
       const nextCount = incrementCounter();
       setState((prev) => ({ ...prev, remaining: Math.max(0, SYNC_LIMIT - nextCount) }));
       setStatus('クラウドに保存しました。');
@@ -141,6 +145,7 @@ export default function SyncPage() {
       const data = snap.data();
       localStorage.setItem(WALLET_KEY, JSON.stringify(data.wallet ?? {}));
       localStorage.setItem(CPM_KEY, JSON.stringify(data.cpm ?? []));
+      localStorage.setItem(TSUMCOUNT_KEY, JSON.stringify(data.tsumCount ?? {}));
       const nextCount = incrementCounter();
       setState((prev) => ({ ...prev, remaining: Math.max(0, SYNC_LIMIT - nextCount) }));
       setStatus('クラウドから復元しました。');

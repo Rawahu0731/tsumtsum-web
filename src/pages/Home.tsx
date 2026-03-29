@@ -16,6 +16,14 @@ const WalletIcon = () => (
   </svg>
 );
 
+const SkillIcon = () => (
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+    <rect x="3" y="4" width="18" height="16" rx="3" stroke="#2563eb" strokeWidth="1.5"/>
+    <path d="M7 9h6M7 13h10M7 17h5" stroke="#2563eb" strokeWidth="1.5" strokeLinecap="round"/>
+    <circle cx="15.5" cy="9" r="1.5" fill="#2563eb" />
+  </svg>
+);
+
 const FEATURES = [
   {
     title: 'CPM Calculator',
@@ -30,6 +38,13 @@ const FEATURES = [
       '日々のコイン収支をスマートに管理。稼いだコインや使ったコインを記録して振り返れます。',
     to: '/wallet',
     icon: <WalletIcon />,
+  },
+  {
+    title: 'Skill Progress Tracker',
+    description:
+      'スキル進行度と必要コイン/メダルを一括管理。検索・ソート・CSV入出力で進捗を整理できます。',
+    to: '/tsum-count',
+    icon: <SkillIcon />,
   },
 ];
 

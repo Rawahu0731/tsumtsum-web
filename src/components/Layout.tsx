@@ -5,6 +5,7 @@ const NAV_ITEMS = [
   { to: '/', label: 'Home', end: true },
   { to: '/cpm', label: 'CPM' },
   { to: '/wallet', label: 'Wallet' },
+  { to: '/tsum-count', label: 'Skill' },
   { to: '/sync', label: 'Sync' },
 ];
 
