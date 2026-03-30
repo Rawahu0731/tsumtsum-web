@@ -256,7 +256,6 @@ export default function RegisterPage() {
                         className="submit-button submit-button--undo"
                         onClick={handleUndo}
                         aria-label="直前の登録を取り消す"
-                        style={{ marginTop: 8 }}
                     >
                         取り消す
                     </button>

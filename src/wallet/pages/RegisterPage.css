@@ -229,7 +229,8 @@ input[type="date"]::-webkit-calendar-picker-indicator {
     border-radius: 6px;
     cursor: pointer;
     box-shadow: none;
-    display: inline-block;
+    display: block;
+    margin: 8px auto 0;
 }
 
 .submit-button--undo:hover {
