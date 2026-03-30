@@ -16,6 +16,7 @@ type TsumRow = {
 	type: number;
 	cookieId: number;
 	needs: number[];
+	maxLevel: number;
 	max: number;
 	defaultOwned: number;
 	isMedal: boolean;
@@ -64,8 +65,17 @@ const formatter = new Intl.NumberFormat('ja-JP');
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
-function levelToPieces(level: number, needs: number[]): number {
-	const cappedLevel = clamp(level, 0, 6);
+function getMaxLevel(needs: number[]): number {
+	for (let i = needs.length - 1; i >= 0; i -= 1) {
+		if (needs[i] > 0) {
+			return i + 1;
+		}
+	}
+	return 1;
+}
+
+function levelToPieces(level: number, needs: number[], maxLevel: number): number {
+	const cappedLevel = clamp(level, 0, maxLevel);
 	const fullLevel = Math.floor(cappedLevel);
 	const fraction = cappedLevel - fullLevel;
 
@@ -74,16 +84,16 @@ function levelToPieces(level: number, needs: number[]): number {
 		sum += needs[i] ?? 0;
 	}
 
-	if (fullLevel < needs.length && fraction > 0) {
+	if (fullLevel < maxLevel && fraction > 0) {
 		sum += fraction * (needs[fullLevel] ?? 0);
 	}
 
 	return sum;
 }
 
-function piecesToLevel(pieces: number, needs: number[]): number {
+function piecesToLevel(pieces: number, needs: number[], maxLevel: number): number {
 	let remaining = Math.max(pieces, 0);
-	for (let i = 0; i < needs.length; i += 1) {
+	for (let i = 0; i < maxLevel; i += 1) {
 		const cost = needs[i] ?? 0;
 		if (remaining >= cost) {
 			remaining -= cost;
@@ -92,13 +102,14 @@ function piecesToLevel(pieces: number, needs: number[]): number {
 			return Number((i + fraction).toFixed(2));
 		}
 	}
-	return 6;
+	return maxLevel;
 }
 
 function parseData(): TsumRow[] {
 	return sourceData.map((row, idx) => {
 		const needs = row.needs.map((value) => Number(value ?? 0));
-		const max = needs.reduce((acc, v) => acc + v, 0);
+		const maxLevel = getMaxLevel(needs);
+		const max = needs.reduce((acc, v, i) => (i < maxLevel ? acc + v : acc), 0);
 		const defaultOwned = Number(row.defaultOwned ?? 0);
 		const type = Number(row.type ?? 0);
 		const cookieId = Number(row.cookieId ?? idx + 1);
@@ -112,6 +123,7 @@ function parseData(): TsumRow[] {
 			type,
 			cookieId,
 			needs,
+			maxLevel,
 			max,
 			defaultOwned,
 			isMedal,
@@ -149,13 +161,13 @@ function formatPercent(value: number) {
 	return `${value.toFixed(2)}%`;
 }
 
-function progressBar(level: number) {
-	const capped = clamp(level, 0, 6);
+function progressBar(level: number, maxLevel: number) {
+	const capped = clamp(level, 0, maxLevel);
 	const full = Math.floor(capped);
 	const frac = capped - full;
 	const blocks: string[] = [];
 
-	for (let i = 0; i < 6; i += 1) {
+	for (let i = 0; i < maxLevel; i += 1) {
 		if (i < full) {
 			blocks.push('■');
 		} else if (i === full && frac > 0) {
@@ -168,14 +180,14 @@ function progressBar(level: number) {
 	return blocks.join('');
 }
 
-function buildLevelChoices(needs: number[], max: number) {
+function buildLevelChoices(needs: number[], max: number, maxLevel: number) {
 	const set = new Set<number>();
 	const cappedMax = Math.max(0, Math.round(max));
 	for (let pieces = 0; pieces <= cappedMax; pieces += 1) {
-		const lv = piecesToLevel(pieces, needs);
+		const lv = piecesToLevel(pieces, needs, maxLevel);
 		set.add(Number(lv.toFixed(4)));
 	}
-	if (!set.has(6)) set.add(6);
+	if (!set.has(maxLevel)) set.add(maxLevel);
 	return Array.from(set).sort((a, b) => a - b);
 }
 
@@ -207,12 +219,14 @@ export default function TsumCountApp() {
 	const baseMap = useMemo(() => new Map(baseRows.map((r) => [r.cookieId, r])), [baseRows]);
 	const [state, setState] = useState<RowState>(() => loadState());
 	const [filter, setFilter] = useState('');
+	const [typeFilter, setTypeFilter] = useState<number | 'all'>('all');
 	const [sortKey, setSortKey] = useState<SortKey>('no');
 	const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
 	const tableRef = useRef<HTMLTableElement>(null);
 	const tableWrapRef = useRef<HTMLDivElement>(null);
 	const scrollTopRef = useRef<HTMLDivElement>(null);
 	const [tableWidth, setTableWidth] = useState(1200);
+	const typeOptions = useMemo(() => Array.from(new Set(baseRows.map((r) => r.type))).sort((a, b) => a - b), [baseRows]);
 
 	useEffect(() => {
 		persistState(state);
@@ -222,7 +236,7 @@ export default function TsumCountApp() {
 		return baseRows.map((row) => {
 			const saved = state[row.cookieId];
 			const owned = clamp(Number(saved?.owned ?? row.defaultOwned ?? 0), 0, row.max);
-			const level = piecesToLevel(owned, row.needs);
+			const level = piecesToLevel(owned, row.needs, row.maxLevel);
 			const remaining = Math.max(row.max - owned, 0);
 			const completion = row.max > 0 ? (owned / row.max) * 100 : 0;
 			const requiredCost = remaining * row.unitCost;
@@ -241,10 +255,12 @@ export default function TsumCountApp() {
 	}, [baseRows, state]);
 
 	const filtered = useMemo(() => {
-		const keyword = filter.trim();
-		const rows = keyword
-			? enrichedRows.filter((r) => r.name.toLowerCase().includes(keyword.toLowerCase()))
-			: enrichedRows;
+		const keyword = filter.trim().toLowerCase();
+		const rows = enrichedRows.filter((r) => {
+			const nameOk = keyword ? r.name.toLowerCase().includes(keyword) : true;
+			const typeOk = typeFilter === 'all' ? true : r.type === typeFilter;
+			return nameOk && typeOk;
+		});
 
 		const sorted = [...rows].sort((a, b) => {
 			const dir = sortDir === 'asc' ? 1 : -1;
@@ -271,7 +287,7 @@ export default function TsumCountApp() {
 		});
 
 		return sorted;
-	}, [enrichedRows, filter, sortDir, sortKey]);
+	}, [enrichedRows, filter, sortDir, sortKey, typeFilter]);
 
 	const selectedRows = filtered.filter((r) => r.checked);
 	const monthlyNewList = useMemo(() => Array.from(MONTHLY_NEW_NAMES), []);
@@ -279,7 +295,7 @@ export default function TsumCountApp() {
 	const levelChoices = useMemo(() => {
 		const map: Record<number, number[]> = {};
 		enrichedRows.forEach((row) => {
-			map[row.cookieId] = buildLevelChoices(row.needs, row.max);
+			map[row.cookieId] = buildLevelChoices(row.needs, row.max, row.maxLevel);
 		});
 		return map;
 	}, [enrichedRows]);
@@ -500,6 +516,21 @@ export default function TsumCountApp() {
 					value={filter}
 					onChange={(e) => setFilter(e.target.value)}
 				/>
+				<select
+					className="search"
+					value={typeFilter}
+					onChange={(e) => {
+						const val = e.target.value;
+						setTypeFilter(val === 'all' ? 'all' : Number(val));
+					}}
+				>
+					<option value="all">全種類</option>
+					{typeOptions.map((t) => (
+						<option key={t} value={t}>
+							{TYPE_LABEL[t] ?? `Type ${t}`}
+						</option>
+					))}
+				</select>
 				<div className="toolbar-meta">
 					<span>表示: {filtered.length} 件</span>
 					<span>選択: {selectedRows.length} 件</span>
@@ -527,7 +558,9 @@ export default function TsumCountApp() {
 				<table className="tsum-table" ref={tableRef}>
 					<thead>
 						<tr>
-							<th>#</th>
+							<th>
+								<button type="button" onClick={() => toggleSort('no')}>#</button>
+							</th>
 							<th>
 								<button type="button" onClick={() => toggleSort('name')}>名前</button>
 							</th>
@@ -570,7 +603,7 @@ export default function TsumCountApp() {
 										value={Number(row.level.toFixed(4))}
 										onChange={(e) => {
 											const lv = Number(e.target.value);
-											const owned = levelToPieces(lv, row.needs);
+											const owned = levelToPieces(lv, row.needs, row.maxLevel);
 											setOwned(row.cookieId, clamp(owned, 0, row.max));
 										}}
 									>
@@ -607,7 +640,7 @@ export default function TsumCountApp() {
 										onChange={(e) => setChecked(row.cookieId, e.target.checked)}
 									/>
 								</td>
-								<td className="progress-col">{progressBar(row.level)}</td>
+								<td className="progress-col">{progressBar(row.level, row.maxLevel)}</td>
 							</tr>
 						))}
 					</tbody>
