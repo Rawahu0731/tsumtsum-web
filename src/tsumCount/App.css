@@ -195,6 +195,31 @@ button, select, input {
   white-space: normal;
 }
 
+.name-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  background: #e2e8f0;
+  color: #0f172a;
+  border: 1px solid transparent;
+}
+
+.chip-monthly {
+  background: #ecfeff;
+  color: #0284c7;
+  border-color: #bae6fd;
+}
+
 .progress-col {
   font-family: "Roboto Mono", "Noto Sans JP", monospace;
 }
@@ -222,10 +247,26 @@ button, select, input {
   font-size: 18px;
 }
 
+.summary-note {
+  margin: 0 0 8px 0;
+  color: #475569;
+  font-size: 13px;
+}
+
 .agg-list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 12px;
+}
+
+.note-list {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #475569;
+  font-size: 13px;
+  flex-wrap: wrap;
 }
 
 .agg-card {

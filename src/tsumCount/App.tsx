@@ -1,6 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import './App.css';
-import { data as rawData } from './data';
+import { data as sourceData } from './data';
+
+const MONTHLY_NEW_NAMES = new Set([
+    'コナン＆キッド',
+    '毛利蘭',
+    '毛利小五郎',
+    '安室透',
+    '灰原哀',
+]);
 
 type TsumRow = {
 	no: number;
@@ -12,6 +20,7 @@ type TsumRow = {
 	defaultOwned: number;
 	isMedal: boolean;
 	unitCost: number;
+	isMonthlyNew: boolean;
 };
 
 type RowState = Record<number, { owned: number; checked: boolean }>;
@@ -45,7 +54,7 @@ const SPECIAL_MEDAL_IDS = new Set<number>([]);
 const TYPE_LABEL: Record<number, string> = {
 	0: '常駐ツム',
 	1: '期間限定ツム',
-	2: 'ピックアップ',
+	2: 'その他のツム',
 	3: '報酬ツム',
 	4: '復活しないツム',
 	5: 'プラスツム',
@@ -87,19 +96,19 @@ function piecesToLevel(pieces: number, needs: number[]): number {
 }
 
 function parseData(): TsumRow[] {
-	return rawData.map((row, idx) => {
-		const name = String(row[1] ?? '').trim();
-		const type = Number(row[7] ?? 0);
-		const cookieId = Number(row[10] ?? idx + 1);
-		const needs = [12, 13, 14, 15, 16, 17].map((i) => Number(row[i] ?? 0));
+	return sourceData.map((row, idx) => {
+		const needs = row.needs.map((value) => Number(value ?? 0));
 		const max = needs.reduce((acc, v) => acc + v, 0);
-		const defaultOwned = Number(row[18] ?? 0);
+		const defaultOwned = Number(row.defaultOwned ?? 0);
+		const type = Number(row.type ?? 0);
+		const cookieId = Number(row.cookieId ?? idx + 1);
 		const isMedal = MEDAL_TYPES.has(type);
 		const unitCost = SPECIAL_MEDAL_IDS.has(cookieId) ? 12850 : isMedal ? 10000 : 30000;
+		const isMonthlyNew = MONTHLY_NEW_NAMES.has(row.name);
 
 		return {
 			no: idx + 1,
-			name,
+			name: row.name,
 			type,
 			cookieId,
 			needs,
@@ -107,6 +116,7 @@ function parseData(): TsumRow[] {
 			defaultOwned,
 			isMedal,
 			unitCost,
+			isMonthlyNew,
 		};
 	});
 }
@@ -264,6 +274,7 @@ export default function TsumCountApp() {
 	}, [enrichedRows, filter, sortDir, sortKey]);
 
 	const selectedRows = filtered.filter((r) => r.checked);
+	const monthlyNewList = useMemo(() => Array.from(MONTHLY_NEW_NAMES), []);
 
 	const levelChoices = useMemo(() => {
 		const map: Record<number, number[]> = {};
@@ -291,6 +302,11 @@ export default function TsumCountApp() {
 
 	const overall = useMemo(() => aggregate(enrichedRows), [enrichedRows]);
 	const selectedSummary = useMemo(() => aggregate(selectedRows), [selectedRows]);
+	const premiumBoxRows = useMemo(
+		() => enrichedRows.filter((row) => row.type === 0 || row.isMonthlyNew),
+		[enrichedRows],
+	);
+	const premiumAggregate = useMemo(() => aggregate(premiumBoxRows), [premiumBoxRows]);
 
 	useEffect(() => {
 		const updateWidth = () => {
@@ -542,7 +558,12 @@ export default function TsumCountApp() {
 						{filtered.map((row) => (
 							<tr key={row.cookieId} className={row.checked ? 'row-checked' : ''}>
 								<td>{row.no}</td>
-								<td className="name-col">{row.name}</td>
+								<td className="name-col">
+									<div className="name-cell">
+										<span>{row.name}</span>
+										{row.isMonthlyNew && <span className="chip chip-monthly">今月新</span>}
+									</div>
+								</td>
 								<td>{TYPE_LABEL[row.type] ?? `Type ${row.type}`}</td>
 								<td>
 									<select
@@ -607,6 +628,18 @@ export default function TsumCountApp() {
 				<div className="agg-list">
 					{renderAggregate('全ツム', overall)}
 					{renderAggregate('チェック済みのみ', selectedSummary)}
+				</div>
+			</section>
+
+			<section className="summary">
+				<h2>プレミアムボックス完売まで</h2>
+				<p className="summary-note">常駐ツムと今月の新ツムを全てスキルマにする必要があります。</p>
+				<div className="agg-list">
+					{renderAggregate('常駐 + 今月新ツム', premiumAggregate)}
+				</div>
+				<div className="note-list">
+					<span className="chip chip-monthly">今月新</span>
+					<span>対象: {monthlyNewList.join('、')}</span>
 				</div>
 			</section>
 		</div>
