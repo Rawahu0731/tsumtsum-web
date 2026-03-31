@@ -42,6 +42,26 @@ button, select, input {
   font-family: inherit;
 }
 
+/* iOS Safari: ダークモードでもフォームが黒く潰れないよう強制的にライトスキームを適用 */
+.tsum-page {
+  color-scheme: light;
+}
+
+/* iOS Safari: input / select の背景と文字色を明示して文字が消えないようにする */
+input, select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: #fff;
+  color: #0f172a;
+}
+
+/* option も明示してダークモードの黒地に黒文字になるのを防ぐ */
+select option {
+  background-color: #fff;
+  color: #0f172a;
+}
+
 .ghost-btn,
 .danger-btn,
 .file-btn {
