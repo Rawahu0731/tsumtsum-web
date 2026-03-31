@@ -47,8 +47,8 @@ type Aggregate = {
 
 const STORAGE_KEY = 'tsum-count-state-v1';
 
-// type=4 をメダルツムとして扱う。必要なら調整してください。
-const MEDAL_TYPES = new Set([4]);
+// プラスツム(type=5)をメダルツムとして扱う。
+const MEDAL_TYPES = new Set([5]);
 // 12850メダルで計算するツムの cookieId をここに列挙する。
 const SPECIAL_MEDAL_IDS = new Set<number>([]);
 
