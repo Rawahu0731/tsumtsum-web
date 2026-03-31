@@ -102,6 +102,74 @@ button, select, input {
   font-size: 14px;
 }
 
+.gacha-panel {
+  margin-top: 16px;
+  padding: 12px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.03);
+}
+
+.gacha-head h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.gacha-head p {
+  margin: 4px 0 0;
+  color: #475569;
+  font-size: 13px;
+}
+
+.gacha-input-row {
+  display: flex;
+}
+
+.gacha-results {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 8px;
+}
+
+.gacha-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: #f8fafc;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.gacha-item:hover {
+  border-color: #0ea5e9;
+  box-shadow: 0 6px 16px rgba(14, 165, 233, 0.12);
+}
+
+.gacha-name {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.gacha-meta {
+  color: #475569;
+  font-size: 13px;
+}
+
+.gacha-empty {
+  padding: 10px 12px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 10px;
+  color: #475569;
+}
+
 .toolbar-meta {
   display: flex;
   align-items: center;

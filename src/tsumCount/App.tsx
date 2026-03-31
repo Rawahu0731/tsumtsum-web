@@ -219,12 +219,14 @@ export default function TsumCountApp() {
 	const baseMap = useMemo(() => new Map(baseRows.map((r) => [r.cookieId, r])), [baseRows]);
 	const [state, setState] = useState<RowState>(() => loadState());
 	const [filter, setFilter] = useState('');
+	const [gachaQuery, setGachaQuery] = useState('');
 	const [typeFilter, setTypeFilter] = useState<number | 'all'>('all');
 	const [sortKey, setSortKey] = useState<SortKey>('no');
 	const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
 	const tableRef = useRef<HTMLTableElement>(null);
 	const tableWrapRef = useRef<HTMLDivElement>(null);
 	const scrollTopRef = useRef<HTMLDivElement>(null);
+	const gachaInputRef = useRef<HTMLInputElement>(null);
 	const [tableWidth, setTableWidth] = useState(1200);
 	const typeOptions = useMemo(() => Array.from(new Set(baseRows.map((r) => r.type))).sort((a, b) => a - b), [baseRows]);
 
@@ -300,6 +302,14 @@ export default function TsumCountApp() {
 		return map;
 	}, [enrichedRows]);
 
+	const gachaResults = useMemo(() => {
+		const keyword = gachaQuery.trim().toLowerCase();
+		if (!keyword) return [] as EnrichedRow[];
+		return enrichedRows
+			.filter((row) => row.name.toLowerCase().includes(keyword))
+			.slice(0, 20);
+	}, [enrichedRows, gachaQuery]);
+
 	const summaryByType = useMemo(() => {
 		const bucket = new Map<number, EnrichedRow[]>();
 		enrichedRows.forEach((row) => {
@@ -366,6 +376,13 @@ export default function TsumCountApp() {
 				checked,
 			},
 		}));
+	};
+
+	const handleGachaClick = (row: EnrichedRow) => {
+		setOwned(row.cookieId, row.owned + 1);
+		requestAnimationFrame(() => {
+			gachaInputRef.current?.focus();
+		});
 	};
 
 	const toggleSort = (key: SortKey) => {
@@ -508,6 +525,40 @@ export default function TsumCountApp() {
 					</button>
 				</div>
 			</header>
+
+			<section className="gacha-panel">
+				<div className="gacha-head">
+					<h2>ガチャ結果入力</h2>
+					<p>ツム名を検索してクリックすると所持数が+1されます</p>
+				</div>
+				<div className="gacha-input-row">
+					<input
+						ref={gachaInputRef}
+						className="search"
+						placeholder="ミッキー、ベル..."
+						value={gachaQuery}
+						onChange={(e) => setGachaQuery(e.target.value)}
+					/>
+				</div>
+				{gachaQuery.trim() && (
+					<div className="gacha-results">
+						{gachaResults.length === 0 && <div className="gacha-empty">該当するツムが見つかりません</div>}
+						{gachaResults.map((row) => (
+							<button
+								key={row.cookieId}
+								type="button"
+								className="gacha-item"
+								onClick={() => handleGachaClick(row)}
+							>
+								<span className="gacha-name">{row.name}</span>
+								<span className="gacha-meta">
+									所持 {row.owned} / {row.max}
+								</span>
+							</button>
+						))}
+					</div>
+				)}
+			</section>
 
 			<section className="toolbar">
 				<input
