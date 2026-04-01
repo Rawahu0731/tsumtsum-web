@@ -693,18 +693,14 @@ export default function TsumCountApp() {
 			const label = file.name;
 			pushLog(`[${label}] load start`);
 			const objectUrl = URL.createObjectURL(file);
-			const image = await new Promise<HTMLImageElement>((resolve, reject) => {
-				const img = new Image();
-				img.onload = () => {
-					pushLog(`[${label}] load done: ${img.width}x${img.height}`);
-					resolve(img);
-				};
-				img.onerror = (err) => {
-					URL.revokeObjectURL(objectUrl);
-					reject(err);
-				};
-				img.src = objectUrl;
+			const image = new Image();
+			image.src = objectUrl;
+			pushLog(`[${label}] waiting for onload`);
+			await new Promise<void>((resolve, reject) => {
+				image.onload = () => resolve();
+				image.onerror = (err) => reject(err);
 			});
+			pushLog(`[${label}] image loaded ${image.width}x${image.height}`);
 			const sx = Math.max(0, Math.min(image.width, image.width * crop.left));
 			const sy = Math.max(0, Math.min(image.height, image.height * crop.top));
 			const sw = Math.max(1, image.width - image.width * (crop.left + crop.right));
@@ -712,12 +708,13 @@ export default function TsumCountApp() {
 			const cropCanvas = document.createElement('canvas');
 			cropCanvas.width = sw;
 			cropCanvas.height = sh;
-			pushLog(`[${label}] crop canvas ${sw}x${sh}`);
+			pushLog(`[${label}] crop canvas set ${cropCanvas.width}x${cropCanvas.height}`);
 			const cropCtx = cropCanvas.getContext('2d');
 			if (!cropCtx) {
 				URL.revokeObjectURL(objectUrl);
 				throw new Error('Canvas not supported');
 			}
+			pushLog(`[${label}] drawImage to crop start`);
 			cropCtx.drawImage(image, sx, sy, sw, sh, 0, 0, sw, sh);
 			URL.revokeObjectURL(objectUrl);
 			const targetWidth = Math.min(sw, MAX_OCR_WIDTH);
@@ -725,12 +722,14 @@ export default function TsumCountApp() {
 			const resizeCanvas = document.createElement('canvas');
 			resizeCanvas.width = targetWidth;
 			resizeCanvas.height = targetHeight;
+			pushLog(`[${label}] resize canvas set ${resizeCanvas.width}x${resizeCanvas.height}`);
 			const resizeCtx = resizeCanvas.getContext('2d');
 			if (!resizeCtx) {
 				cropCanvas.width = 0;
 				cropCanvas.height = 0;
 				throw new Error('Canvas not supported');
 			}
+			pushLog(`[${label}] drawImage to resize start`);
 			resizeCtx.drawImage(cropCanvas, 0, 0, sw, sh, 0, 0, targetWidth, targetHeight);
 			cropCanvas.width = 0;
 			cropCanvas.height = 0;
