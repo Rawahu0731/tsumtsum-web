@@ -874,7 +874,7 @@ export default function TsumCountApp() {
 			<header className="tsum-header">
 				<div>
 					<p className="eyebrow">TSUM SKILL TRACKER</p>
-					<h1>スキル進行・コイン/メダル計算</h1>
+					<h1>スキル進行・コイン/メダル計算 V2</h1>
 				</div>
 				<div className="header-actions">
 					<button type="button" onClick={downloadCsv} className="ghost-btn">
