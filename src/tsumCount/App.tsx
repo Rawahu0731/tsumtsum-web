@@ -753,34 +753,40 @@ export default function TsumCountApp() {
 				setOcrStatus('画像が選択されていません');
 				return;
 			}
+			pushLog(`files length: ${files.length}`);
+			pushLog(`files keys: ${Object.keys(files).join(',')}`);
+			const fileArray = Array.from(files);
 			setOcrLoading(true);
 			setOcrStatus('OCR処理中...');
-			setOcrProgress({ current: 0, total: files.length });
-			pushLog(`OCR start: ${files.length} file(s)`);
+			setOcrProgress({ current: 0, total: fileArray.length });
+			pushLog(`OCR start: ${fileArray.length} file(s)`);
 			const resolved: OcrResult[] = [];
 			let hadError = false;
 			let finalStatus: string | null = null;
 			try {
 				const worker = await ensureWorker();
 				pushLog('Worker ready for OCR');
-				for (let i = 0; i < files.length; i += 1) {
-					const file = files[i];
-					const id = crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-					const originalUrl = URL.createObjectURL(file);
-					const baseResult: OcrResult = {
-						id,
-						text: '',
-						matched: false,
-						matchedRow: undefined,
-						selectedCookieId: undefined,
-						originalUrl,
-						croppedUrl: originalUrl,
-						skipped: false,
-					};
+				pushLog('Entering file loop');
+				for (let i = 0; i < fileArray.length; i += 1) {
+					let baseResult: OcrResult | null = null;
 					try {
-						setOcrProgress({ current: i, total: files.length });
-						setOcrStatus(`OCR処理中... (${i + 1} / ${files.length})`);
-						pushLog(`[${file.name}] start (${i + 1}/${files.length})`);
+						const file = fileArray[i];
+						pushLog(`[${file.name}] file acquired`);
+						const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+						const originalUrl = URL.createObjectURL(file);
+						baseResult = {
+							id,
+							text: '',
+							matched: false,
+							matchedRow: undefined,
+							selectedCookieId: undefined,
+							originalUrl,
+							croppedUrl: originalUrl,
+							skipped: false,
+						};
+						setOcrProgress({ current: i, total: fileArray.length });
+						setOcrStatus(`OCR処理中... (${i + 1} / ${fileArray.length})`);
+						pushLog(`[${file.name}] start (${i + 1}/${fileArray.length})`);
 						const { blob, sourceWidth, sourceHeight, targetWidth, targetHeight } = await cropImage(file, cropSetting);
 						pushLog(`[${file.name}] resized ${sourceWidth}x${sourceHeight} -> ${targetWidth}x${targetHeight}`);
 						baseResult.croppedUrl = URL.createObjectURL(blob);
@@ -795,11 +801,11 @@ export default function TsumCountApp() {
 						baseResult.selectedCookieId = matchedRow?.cookieId;
 					} catch (error) {
 						hadError = true;
-						pushLog(`[${file.name}] error: ${(error as Error)?.message ?? error}`);
+						pushLog(`file loop error: ${(error as Error)?.message ?? error}`);
 						if (!finalStatus) finalStatus = 'OCR処理でエラーが発生しました。ログを確認してください。';
 					} finally {
-						setOcrProgress({ current: i + 1, total: files.length });
-						resolved.push(baseResult);
+						setOcrProgress({ current: i + 1, total: fileArray.length });
+						if (baseResult) resolved.push(baseResult);
 					}
 				}
 			} catch (err) {
@@ -874,7 +880,7 @@ export default function TsumCountApp() {
 			<header className="tsum-header">
 				<div>
 					<p className="eyebrow">TSUM SKILL TRACKER</p>
-					<h1>スキル進行・コイン/メダル計算 V2</h1>
+					<h1>スキル進行・コイン/メダル計算 V3</h1>
 				</div>
 				<div className="header-actions">
 					<button type="button" onClick={downloadCsv} className="ghost-btn">
