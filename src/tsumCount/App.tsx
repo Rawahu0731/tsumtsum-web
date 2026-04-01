@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import Tesseract from 'tesseract.js';
 import './App.css';
 import { data as sourceData } from './data';
 
@@ -45,7 +46,32 @@ type Aggregate = {
 	totalCount: number;
 };
 
+type CropSetting = {
+	top: number;
+	bottom: number;
+	left: number;
+	right: number;
+};
+
+export type OcrResult = {
+	id: string;
+	text: string;
+	matched: boolean;
+	matchedRow?: EnrichedRow;
+	selectedCookieId?: number;
+	originalUrl: string;
+	croppedUrl: string;
+	skipped: boolean;
+};
+
 const STORAGE_KEY = 'tsum-count-state-v1';
+const OCR_CROP_STORAGE_KEY = 'tsum-ocr-crop-v1';
+const DEFAULT_CROP: CropSetting = {
+	top: 0.1,
+	bottom: 0.1,
+	left: 0.05,
+	right: 0.05,
+};
 
 // プラスツム(type=5)をメダルツムとして扱う。
 const MEDAL_TYPES = new Set([5]);
@@ -161,6 +187,36 @@ function formatPercent(value: number) {
 	return `${value.toFixed(2)}%`;
 }
 
+function loadCropSetting(): CropSetting {
+	try {
+		const raw = localStorage.getItem(OCR_CROP_STORAGE_KEY);
+		if (!raw) return DEFAULT_CROP;
+		const parsed = JSON.parse(raw) as CropSetting;
+		return {
+			top: clamp(Number(parsed.top ?? DEFAULT_CROP.top), 0, 0.95),
+			bottom: clamp(Number(parsed.bottom ?? DEFAULT_CROP.bottom), 0, 0.95),
+			left: clamp(Number(parsed.left ?? DEFAULT_CROP.left), 0, 0.95),
+			right: clamp(Number(parsed.right ?? DEFAULT_CROP.right), 0, 0.95),
+		};
+	} catch (err) {
+		console.error('Failed to load crop setting', err);
+		return DEFAULT_CROP;
+	}
+}
+
+function persistCropSetting(setting: CropSetting) {
+	try {
+		localStorage.setItem(OCR_CROP_STORAGE_KEY, JSON.stringify(setting));
+	} catch (err) {
+		console.error('Failed to save crop setting', err);
+	}
+}
+
+function normalizeText(text: string) {
+	// Remove half-width spaces entirely, then strip any remaining whitespace/newlines
+	return text.replace(/ /g, '').replace(/\s+/g, '').trim();
+}
+
 function progressBar(level: number, maxLevel: number) {
 	const capped = clamp(level, 0, maxLevel);
 	const full = Math.floor(capped);
@@ -228,11 +284,20 @@ export default function TsumCountApp() {
 	const scrollTopRef = useRef<HTMLDivElement>(null);
 	const gachaInputRef = useRef<HTMLInputElement>(null);
 	const [tableWidth, setTableWidth] = useState(1200);
+	const [cropSetting, setCropSetting] = useState<CropSetting>(() => loadCropSetting());
+	const [ocrResults, setOcrResults] = useState<OcrResult[]>([]);
+	const [ocrSearchMap, setOcrSearchMap] = useState<Record<string, string>>({});
+	const [ocrLoading, setOcrLoading] = useState(false);
+	const [ocrStatus, setOcrStatus] = useState('');
 	const typeOptions = useMemo(() => Array.from(new Set(baseRows.map((r) => r.type))).sort((a, b) => a - b), [baseRows]);
 
 	useEffect(() => {
 		persistState(state);
 	}, [state]);
+
+	useEffect(() => {
+		persistCropSetting(cropSetting);
+	}, [cropSetting]);
 
 	const enrichedRows = useMemo<EnrichedRow[]>(() => {
 		return baseRows.map((row) => {
@@ -459,6 +524,78 @@ export default function TsumCountApp() {
 		setState(next);
 	};
 
+	const updateResultSelection = useCallback(
+		(id: string, cookieId?: number) => {
+			const matchedRow = cookieId ? enrichedRows.find((r) => r.cookieId === cookieId) : undefined;
+			setOcrResults((prev) =>
+				prev.map((item) =>
+					item.id === id
+						? {
+							...item,
+							selectedCookieId: matchedRow?.cookieId,
+							matchedRow: matchedRow ?? item.matchedRow,
+							matched: Boolean(matchedRow),
+							skipped: false,
+						}
+						: item,
+				),
+			);
+		},
+		[enrichedRows],
+	);
+
+	const updateResultText = useCallback(
+		(id: string, text: string) => {
+			const normalized = normalizeText(text);
+			const hit = enrichedRows.find((r) => r.name === normalized);
+			setOcrResults((prev) =>
+				prev.map((item) =>
+					item.id === id
+						? {
+							...item,
+							text: normalized,
+							matched: Boolean(hit),
+							matchedRow: hit,
+							selectedCookieId: hit?.cookieId ?? item.selectedCookieId,
+							skipped: Boolean(hit) ? false : item.skipped,
+						}
+						: item,
+				),
+			);
+			setOcrSearchMap((prev) => ({ ...prev, [id]: normalized }));
+		},
+		[enrichedRows],
+	);
+
+	const toggleSkip = useCallback((id: string, skipped: boolean) => {
+		setOcrResults((prev) =>
+			prev.map((item) =>
+				item.id === id
+					? {
+						...item,
+						skipped,
+					}
+					: item,
+			),
+		);
+	}, []);
+
+	const clearOcrResults = useCallback(() => {
+		setOcrResults((prev) => {
+			prev.forEach((item) => {
+				URL.revokeObjectURL(item.originalUrl);
+				URL.revokeObjectURL(item.croppedUrl);
+			});
+			return [];
+		});
+		setOcrSearchMap({});
+	}, []);
+
+	const hasBlockingOcr = useMemo(
+		() => ocrResults.some((res) => !res.skipped && !res.matched),
+		[ocrResults],
+	);
+
 	const onFileImport = (file: File) => {
 		const reader = new FileReader();
 		reader.onload = (ev) => {
@@ -469,6 +606,104 @@ export default function TsumCountApp() {
 		};
 		reader.readAsText(file, 'utf-8');
 	};
+
+	const cropImage = useCallback(async (file: File, crop: CropSetting) => {
+		const objectUrl = URL.createObjectURL(file);
+		const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+			const img = new Image();
+			img.onload = () => resolve(img);
+			img.onerror = (err) => reject(err);
+			img.src = objectUrl;
+		});
+		const canvas = document.createElement('canvas');
+		const sx = Math.max(0, Math.min(image.width, image.width * crop.left));
+		const sy = Math.max(0, Math.min(image.height, image.height * crop.top));
+		const sw = Math.max(1, image.width - image.width * (crop.left + crop.right));
+		const sh = Math.max(1, image.height - image.height * (crop.top + crop.bottom));
+		canvas.width = sw;
+		canvas.height = sh;
+		const ctx = canvas.getContext('2d');
+		if (!ctx) {
+			URL.revokeObjectURL(objectUrl);
+			throw new Error('Canvas not supported');
+		}
+		ctx.drawImage(image, sx, sy, sw, sh, 0, 0, sw, sh);
+		URL.revokeObjectURL(objectUrl);
+		const blob = await new Promise<Blob>((resolve, reject) => {
+			canvas.toBlob((b) => {
+				if (b) resolve(b);
+				else reject(new Error('Failed to crop image'));
+			}, 'image/png');
+		});
+		return blob;
+	}, []);
+
+	const handleOcrFiles = useCallback(
+		async (files: FileList | null) => {
+			if (!files || files.length === 0) return;
+			setOcrLoading(true);
+			setOcrStatus('OCR処理中...');
+			try {
+				const tasks = Array.from(files).map(async (file) => {
+					const id = crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+					const originalUrl = URL.createObjectURL(file);
+					let croppedUrl: string | undefined;
+					try {
+						const cropped = await cropImage(file, cropSetting);
+						croppedUrl = URL.createObjectURL(cropped);
+						const result = await Tesseract.recognize(cropped, 'jpn');
+						const text = normalizeText(result?.data?.text ?? '');
+						const matchedRow = text ? enrichedRows.find((row) => row.name === text) : undefined;
+						return {
+							id,
+							text,
+							matched: Boolean(matchedRow),
+							matchedRow,
+							selectedCookieId: matchedRow?.cookieId,
+							originalUrl,
+							croppedUrl,
+							skipped: false,
+						} satisfies OcrResult;
+					} catch (error) {
+						if (croppedUrl) URL.revokeObjectURL(croppedUrl);
+						URL.revokeObjectURL(originalUrl);
+						throw error;
+					}
+				});
+				const resolved = await Promise.all(tasks);
+				setOcrResults((prev) => [...prev, ...resolved]);
+				setOcrStatus(resolved.length ? 'OCR完了。結果を確認してください。' : '');
+			} catch (err) {
+				console.error(err);
+				setOcrStatus('OCR処理に失敗しました。設定を見直して再試行してください。');
+			} finally {
+				setOcrLoading(false);
+			}
+		},
+		[cropImage, cropSetting, enrichedRows],
+	);
+
+	const handleConfirmOcr = useCallback(() => {
+		if (ocrResults.length === 0) return;
+		setState((prev) => {
+			const next = { ...prev };
+			ocrResults.forEach((res) => {
+				if (res.skipped) return;
+				const targetId = res.selectedCookieId ?? res.matchedRow?.cookieId;
+				if (!targetId) return;
+				const base = baseMap.get(targetId);
+				if (!base) return;
+				const currentOwned = next[targetId]?.owned ?? base.defaultOwned ?? 0;
+				next[targetId] = {
+					owned: clamp(currentOwned + 1, 0, base.max),
+					checked: next[targetId]?.checked ?? false,
+				};
+			});
+			return next;
+		});
+		setOcrStatus('所持数に反映しました');
+		clearOcrResults();
+	}, [baseMap, clearOcrResults, ocrResults]);
 
 	const renderAggregate = (label: string, agg: Aggregate) => (
 		<div className="agg-card" key={label}>
@@ -552,10 +787,197 @@ export default function TsumCountApp() {
 							>
 								<span className="gacha-name">{row.name}</span>
 								<span className="gacha-meta">
-									所持 {row.owned} / {row.max}
+									<span className="gacha-meta-line">SLv {row.level.toFixed(2)} / {row.maxLevel}</span>
+									<span className="gacha-meta-line">
+										所持 {row.owned} / {row.max}
+									</span>
 								</span>
 							</button>
 						))}
+					</div>
+				)}
+			</section>
+
+			<section className="ocr-panel">
+				<div className="ocr-head">
+					<h2>スクショOCR一括入力</h2>
+					<p>複数画像をアップロードすると即OCRします。トリミング割合を調整して精度を上げられます。</p>
+				</div>
+				<div className="ocr-controls">
+					<div className="crop-grid">
+						<label className="crop-field">
+							<span>上から削る割合</span>
+							<input
+								type="number"
+								step={0.01}
+								min={0}
+								max={0.95}
+								value={cropSetting.top}
+								onChange={(e) =>
+									setCropSetting((prev) => ({
+										...prev,
+										top: clamp(Number(e.target.value), 0, 0.95),
+									}))
+								}
+							/>
+						</label>
+						<label className="crop-field">
+							<span>下から削る割合</span>
+							<input
+								type="number"
+								step={0.01}
+								min={0}
+								max={0.95}
+								value={cropSetting.bottom}
+								onChange={(e) =>
+									setCropSetting((prev) => ({
+										...prev,
+										bottom: clamp(Number(e.target.value), 0, 0.95),
+									}))
+								}
+							/>
+						</label>
+						<label className="crop-field">
+							<span>左から削る割合</span>
+							<input
+								type="number"
+								step={0.01}
+								min={0}
+								max={0.95}
+								value={cropSetting.left}
+								onChange={(e) =>
+									setCropSetting((prev) => ({
+										...prev,
+										left: clamp(Number(e.target.value), 0, 0.95),
+									}))
+								}
+							/>
+						</label>
+						<label className="crop-field">
+							<span>右から削る割合</span>
+							<input
+								type="number"
+								step={0.01}
+								min={0}
+								max={0.95}
+								value={cropSetting.right}
+								onChange={(e) =>
+									setCropSetting((prev) => ({
+										...prev,
+										right: clamp(Number(e.target.value), 0, 0.95),
+									}))
+								}
+							/>
+						</label>
+					</div>
+					<div className="ocr-actions">
+						<label className="file-btn">
+							画像をアップロード
+							<input
+								type="file"
+								accept="image/*"
+								multiple
+								disabled={ocrLoading}
+								onChange={(e) => {
+									handleOcrFiles(e.target.files);
+									e.target.value = '';
+								}}
+							/>
+						</label>
+						<button type="button" className="ghost-btn" onClick={clearOcrResults} disabled={ocrResults.length === 0}>
+							結果クリア
+						</button>
+					</div>
+				</div>
+				{ocrStatus && <div className="ocr-status">{ocrStatus}</div>}
+				{ocrLoading && <div className="ocr-loading">処理中...</div>}
+				{ocrResults.length > 0 && (
+					<div className="ocr-results">
+						{ocrResults.map((res) => {
+							const searchText = ocrSearchMap[res.id] ?? res.text;
+							const keyword = searchText.trim().toLowerCase();
+							const candidates = enrichedRows
+								.filter((row) => row.name.toLowerCase().includes(keyword))
+								.slice(0, 8);
+							const statusClass = res.skipped
+								? 'ocr-tag-skip'
+								: res.matched
+									? 'ocr-tag-match'
+									: 'ocr-tag-miss';
+							const statusText = res.skipped ? 'スキップ' : res.matched ? '一致' : '未一致';
+							return (
+								<div key={res.id} className={`ocr-card ${!res.matched && !res.skipped ? 'ocr-card-unmatched' : ''}`}>
+									<div className="ocr-image-grid">
+										<div className="ocr-image-wrap">
+											<img src={res.originalUrl} alt={res.text || 'upload'} className="ocr-image" />
+										</div>
+										<div className="ocr-image-wrap">
+											<img src={res.croppedUrl} alt={res.text || 'cropped'} className="ocr-image" />
+										</div>
+									</div>
+									<div className="ocr-body">
+										<div className="ocr-row">
+											<label className="ocr-label">OCR結果</label>
+											<input
+												className="ocr-text-input"
+												value={searchText}
+												onChange={(e) => updateResultText(res.id, e.target.value)}
+											/>
+										</div>
+										<div className="ocr-row ocr-match-row">
+											<span className={`ocr-tag ${statusClass}`}>{statusText}</span>
+											<span className="ocr-match-name">
+												{res.skipped
+													? 'スキップ対象'
+													: res.matchedRow?.name ?? '手動でツムを選択してください'}
+											</span>
+											<button
+												type="button"
+												className="ghost-btn ocr-skip-btn"
+												onClick={() => toggleSkip(res.id, !res.skipped)}
+											>
+												{res.skipped ? 'スキップ解除' : 'このツムをスキップ'}
+											</button>
+										</div>
+										<div className="ocr-row">
+											<label className="ocr-label">ツム検索（部分一致）</label>
+											<input
+												className="ocr-text-input"
+												value={searchText}
+												onChange={(e) => updateResultText(res.id, e.target.value)}
+												placeholder="例: ミッキー"
+											/>
+											<div className="ocr-candidates">
+												{candidates.length === 0 && <div className="ocr-empty">候補がありません</div>}
+												{candidates.map((cand) => (
+													<button
+														key={cand.cookieId}
+														type="button"
+														className={`ocr-candidate ${res.selectedCookieId === cand.cookieId ? 'ocr-candidate-active' : ''}`}
+														onClick={() => updateResultSelection(res.id, cand.cookieId)}
+													>
+														<span className="ocr-candidate-name">{cand.name}</span>
+														<span className="ocr-candidate-meta">
+															所持 {cand.owned} / {cand.max}
+														</span>
+													</button>
+												))}
+											</div>
+										</div>
+									</div>
+								</div>
+							);
+						})}
+						<div className="ocr-footer">
+							<button
+								type="button"
+								className="ghost-btn"
+								onClick={handleConfirmOcr}
+								disabled={ocrResults.length === 0 || hasBlockingOcr}
+							>
+								確定して所持数に +1
+							</button>
+						</div>
 					</div>
 				)}
 			</section>
