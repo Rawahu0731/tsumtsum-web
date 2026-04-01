@@ -688,109 +688,135 @@ export default function TsumCountApp() {
 		reader.readAsText(file, 'utf-8');
 	};
 
-	const cropImage = useCallback(async (file: File, crop: CropSetting): Promise<CropImageResult> => {
-		const objectUrl = URL.createObjectURL(file);
-		const image = await new Promise<HTMLImageElement>((resolve, reject) => {
-			const img = new Image();
-			img.onload = () => {
-				resolve(img);
-			};
-			img.onerror = (err) => {
+	const cropImage = useCallback(
+		async (file: File, crop: CropSetting): Promise<CropImageResult> => {
+			const label = file.name;
+			pushLog(`[${label}] load start`);
+			const objectUrl = URL.createObjectURL(file);
+			const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+				const img = new Image();
+				img.onload = () => {
+					pushLog(`[${label}] load done: ${img.width}x${img.height}`);
+					resolve(img);
+				};
+				img.onerror = (err) => {
+					URL.revokeObjectURL(objectUrl);
+					reject(err);
+				};
+				img.src = objectUrl;
+			});
+			const sx = Math.max(0, Math.min(image.width, image.width * crop.left));
+			const sy = Math.max(0, Math.min(image.height, image.height * crop.top));
+			const sw = Math.max(1, image.width - image.width * (crop.left + crop.right));
+			const sh = Math.max(1, image.height - image.height * (crop.top + crop.bottom));
+			const cropCanvas = document.createElement('canvas');
+			cropCanvas.width = sw;
+			cropCanvas.height = sh;
+			pushLog(`[${label}] crop canvas ${sw}x${sh}`);
+			const cropCtx = cropCanvas.getContext('2d');
+			if (!cropCtx) {
 				URL.revokeObjectURL(objectUrl);
-				reject(err);
-			};
-			img.src = objectUrl;
-		});
-		const sx = Math.max(0, Math.min(image.width, image.width * crop.left));
-		const sy = Math.max(0, Math.min(image.height, image.height * crop.top));
-		const sw = Math.max(1, image.width - image.width * (crop.left + crop.right));
-		const sh = Math.max(1, image.height - image.height * (crop.top + crop.bottom));
-		const cropCanvas = document.createElement('canvas');
-		cropCanvas.width = sw;
-		cropCanvas.height = sh;
-		const cropCtx = cropCanvas.getContext('2d');
-		if (!cropCtx) {
+				throw new Error('Canvas not supported');
+			}
+			cropCtx.drawImage(image, sx, sy, sw, sh, 0, 0, sw, sh);
 			URL.revokeObjectURL(objectUrl);
-			throw new Error('Canvas not supported');
-		}
-		cropCtx.drawImage(image, sx, sy, sw, sh, 0, 0, sw, sh);
-		URL.revokeObjectURL(objectUrl);
-		const targetWidth = Math.min(sw, MAX_OCR_WIDTH);
-		const targetHeight = Math.max(1, Math.round((sh * targetWidth) / sw));
-		const resizeCanvas = document.createElement('canvas');
-		resizeCanvas.width = targetWidth;
-		resizeCanvas.height = targetHeight;
-		const resizeCtx = resizeCanvas.getContext('2d');
-		if (!resizeCtx) {
+			const targetWidth = Math.min(sw, MAX_OCR_WIDTH);
+			const targetHeight = Math.max(1, Math.round((sh * targetWidth) / sw));
+			const resizeCanvas = document.createElement('canvas');
+			resizeCanvas.width = targetWidth;
+			resizeCanvas.height = targetHeight;
+			const resizeCtx = resizeCanvas.getContext('2d');
+			if (!resizeCtx) {
+				cropCanvas.width = 0;
+				cropCanvas.height = 0;
+				throw new Error('Canvas not supported');
+			}
+			resizeCtx.drawImage(cropCanvas, 0, 0, sw, sh, 0, 0, targetWidth, targetHeight);
 			cropCanvas.width = 0;
 			cropCanvas.height = 0;
-			throw new Error('Canvas not supported');
-		}
-		resizeCtx.drawImage(cropCanvas, 0, 0, sw, sh, 0, 0, targetWidth, targetHeight);
-		cropCanvas.width = 0;
-		cropCanvas.height = 0;
-		const blob = await new Promise<Blob>((resolve, reject) => {
-			resizeCanvas.toBlob((b) => {
-				resizeCanvas.width = 0;
-				resizeCanvas.height = 0;
-				if (b) resolve(b);
-				else reject(new Error('Failed to crop image'));
-			}, 'image/png');
-		});
-		return { blob, sourceWidth: sw, sourceHeight: sh, targetWidth, targetHeight };
-	}, []);
+			const blob = await new Promise<Blob>((resolve, reject) => {
+				resizeCanvas.toBlob((b) => {
+					resizeCanvas.width = 0;
+					resizeCanvas.height = 0;
+					if (b) resolve(b);
+					else reject(new Error('Failed to crop image'));
+				}, 'image/png');
+			});
+			pushLog(`[${label}] resized for OCR ${targetWidth}x${targetHeight}`);
+			return { blob, sourceWidth: sw, sourceHeight: sh, targetWidth, targetHeight };
+		},
+		[pushLog],
+	);
 
 	const handleOcrFiles = useCallback(
 		async (files: FileList | null) => {
-			if (!files || files.length === 0) return;
+			if (!files || files.length === 0) {
+				setOcrStatus('画像が選択されていません');
+				return;
+			}
 			setOcrLoading(true);
 			setOcrStatus('OCR処理中...');
 			setOcrProgress({ current: 0, total: files.length });
 			pushLog(`OCR start: ${files.length} file(s)`);
+			const resolved: OcrResult[] = [];
+			let hadError = false;
+			let finalStatus: string | null = null;
 			try {
 				const worker = await ensureWorker();
 				pushLog('Worker ready for OCR');
-				const resolved: OcrResult[] = [];
 				for (let i = 0; i < files.length; i += 1) {
 					const file = files[i];
-					setOcrProgress({ current: i + 1, total: files.length });
-					setOcrStatus(`OCR処理中... (${i + 1} / ${files.length})`);
-					pushLog(`[${file.name}] start (${i + 1}/${files.length})`);
 					const id = crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 					const originalUrl = URL.createObjectURL(file);
-					let croppedUrl: string | undefined;
+					const baseResult: OcrResult = {
+						id,
+						text: '',
+						matched: false,
+						matchedRow: undefined,
+						selectedCookieId: undefined,
+						originalUrl,
+						croppedUrl: originalUrl,
+						skipped: false,
+					};
 					try {
+						setOcrProgress({ current: i, total: files.length });
+						setOcrStatus(`OCR処理中... (${i + 1} / ${files.length})`);
+						pushLog(`[${file.name}] start (${i + 1}/${files.length})`);
 						const { blob, sourceWidth, sourceHeight, targetWidth, targetHeight } = await cropImage(file, cropSetting);
 						pushLog(`[${file.name}] resized ${sourceWidth}x${sourceHeight} -> ${targetWidth}x${targetHeight}`);
-						croppedUrl = URL.createObjectURL(blob);
+						baseResult.croppedUrl = URL.createObjectURL(blob);
 						pushLog(`[${file.name}] recognize start`);
 						const result = await worker.recognize(blob);
 						const text = normalizeText(result?.data?.text ?? '');
 						pushLog(`[${file.name}] recognize done: ${text ? text : '(empty)'}`);
 						const matchedRow = text ? enrichedRows.find((row) => row.name === text) : undefined;
-						resolved.push({
-							id,
-							text,
-							matched: Boolean(matchedRow),
-							matchedRow,
-							selectedCookieId: matchedRow?.cookieId,
-							originalUrl,
-							croppedUrl,
-							skipped: false,
-						});
+						baseResult.text = text;
+						baseResult.matched = Boolean(matchedRow);
+						baseResult.matchedRow = matchedRow;
+						baseResult.selectedCookieId = matchedRow?.cookieId;
 					} catch (error) {
-						if (croppedUrl) URL.revokeObjectURL(croppedUrl);
-						URL.revokeObjectURL(originalUrl);
+						hadError = true;
 						pushLog(`[${file.name}] error: ${(error as Error)?.message ?? error}`);
-						setOcrStatus('OCR処理でエラーが発生しました。ログを確認してください。');
+						if (!finalStatus) finalStatus = 'OCR処理でエラーが発生しました。ログを確認してください。';
+					} finally {
+						setOcrProgress({ current: i + 1, total: files.length });
+						resolved.push(baseResult);
 					}
 				}
-				setOcrResults((prev) => [...prev, ...resolved]);
-				setOcrStatus(resolved.length ? 'OCR完了。結果を確認してください。' : 'OCR結果がありませんでした。');
 			} catch (err) {
+				hadError = true;
 				pushLog(`OCR fatal error: ${(err as Error)?.message ?? err}`);
-				setOcrStatus('OCR処理に失敗しました。設定を見直して再試行してください。');
+				finalStatus = 'OCR処理に失敗しました。設定を見直して再試行してください。';
 			} finally {
+				setOcrResults((prev) => [...prev, ...resolved]);
+				if (!finalStatus) {
+					finalStatus = resolved.length > 0
+						? hadError
+							? 'OCR完了（一部エラーあり）。ログを確認してください。'
+							: 'OCR完了。結果を確認してください。'
+						: 'OCR結果がありませんでした。';
+				}
+				setOcrStatus(finalStatus);
 				setOcrLoading(false);
 				setOcrProgress({ current: 0, total: 0 });
 			}
