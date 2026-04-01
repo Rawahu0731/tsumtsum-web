@@ -190,11 +190,11 @@ export default function PasteCoin({ onApply }: Props) {
                 </div>
             )}
 
-            {status && <div style={{ marginTop: 6 }}>{status}</div>}
+            {status && <div style={{ marginTop: 6, textAlign: 'center' }}>{status}</div>}
 
             {errorMsg && (
-                <div style={{ marginTop: 8 }}>
-                    <div className="error-message" style={{ position: 'relative' }}>
+                <div style={{ marginTop: 8, textAlign: 'center' }}>
+                    <div className="error-message" style={{ position: 'relative', display: 'inline-block', textAlign: 'left' }}>
                         <div style={{ marginRight: 28 }}>{errorMsg}</div>
                         <button onClick={() => setErrorMsg(null)} style={{ position: 'absolute', right: 8, top: 8, border: 'none', background: 'transparent', cursor: 'pointer', color: '#9ca3af', fontWeight: 700 }}>×</button>
                     </div>
@@ -202,7 +202,7 @@ export default function PasteCoin({ onApply }: Props) {
             )}
 
             {recognized !== null && (
-                <div style={{ marginTop: 8, color: '#374151' }}>
+                <div style={{ marginTop: 8, color: '#374151', textAlign: 'center' }}>
                     認識: <span style={{ color: 'red', fontWeight: 700 }}>{recognized.toLocaleString()}</span> 枚
                 </div>
             )}
