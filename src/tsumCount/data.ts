@@ -722,4 +722,5 @@ export const data: DataRow[] = [
     { name: "江戸川コナン＋", type: 3, cookieId: 713, needs: [1, 2, 3, 0, 0, 0], defaultOwned: 0 },
     { name: "安室透", type: 1, cookieId: 714, needs: [1, 1, 2, 4, 8, 16], defaultOwned: 0 },
     { name: "灰原哀", type: 1, cookieId: 715, needs: [1, 1, 2, 4, 8, 16], defaultOwned: 0 },
+    
 ];

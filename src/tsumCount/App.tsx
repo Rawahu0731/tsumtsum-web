@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import Tesseract from 'tesseract.js';
+import { createWorker } from 'tesseract.js';
 import './App.css';
 import { data as sourceData } from './data';
 
@@ -66,6 +66,7 @@ export type OcrResult = {
 
 const STORAGE_KEY = 'tsum-count-state-v1';
 const OCR_CROP_STORAGE_KEY = 'tsum-ocr-crop-v1';
+const MAX_OCR_WIDTH = 1000;
 const DEFAULT_CROP: CropSetting = {
 	top: 0.1,
 	bottom: 0.1,
@@ -90,6 +91,8 @@ const TYPE_LABEL: Record<number, string> = {
 const formatter = new Intl.NumberFormat('ja-JP');
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+
+type TesseractWorker = Awaited<ReturnType<typeof createWorker>>;
 
 function getMaxLevel(needs: number[]): number {
 	for (let i = needs.length - 1; i >= 0; i -= 1) {
@@ -283,12 +286,15 @@ export default function TsumCountApp() {
 	const tableWrapRef = useRef<HTMLDivElement>(null);
 	const scrollTopRef = useRef<HTMLDivElement>(null);
 	const gachaInputRef = useRef<HTMLInputElement>(null);
+	const workerRef = useRef<TesseractWorker | null>(null);
+	const workerPromiseRef = useRef<Promise<TesseractWorker> | null>(null);
 	const [tableWidth, setTableWidth] = useState(1200);
 	const [cropSetting, setCropSetting] = useState<CropSetting>(() => loadCropSetting());
 	const [ocrResults, setOcrResults] = useState<OcrResult[]>([]);
 	const [ocrSearchMap, setOcrSearchMap] = useState<Record<string, string>>({});
 	const [ocrLoading, setOcrLoading] = useState(false);
 	const [ocrStatus, setOcrStatus] = useState('');
+	const [ocrProgress, setOcrProgress] = useState<{ current: number; total: number }>({ current: 0, total: 0 });
 	const typeOptions = useMemo(() => Array.from(new Set(baseRows.map((r) => r.type))).sort((a, b) => a - b), [baseRows]);
 
 	useEffect(() => {
@@ -298,6 +304,32 @@ export default function TsumCountApp() {
 	useEffect(() => {
 		persistCropSetting(cropSetting);
 	}, [cropSetting]);
+
+	useEffect(() => {
+		return () => {
+			workerPromiseRef.current = null;
+			const worker = workerRef.current;
+			workerRef.current = null;
+			if (worker) {
+				worker.terminate();
+			}
+		};
+	}, []);
+
+	const ensureWorker = useCallback(async () => {
+		if (workerRef.current) return workerRef.current;
+		if (!workerPromiseRef.current) {
+			workerPromiseRef.current = (async () => {
+				const worker = await createWorker({});
+				await worker.load();
+				await worker.loadLanguage('jpn');
+				await worker.initialize('jpn');
+				workerRef.current = worker;
+				return worker;
+			})();
+		}
+		return workerPromiseRef.current;
+	}, []);
 
 	const enrichedRows = useMemo<EnrichedRow[]>(() => {
 		return baseRows.map((row) => {
@@ -611,26 +643,47 @@ export default function TsumCountApp() {
 		const objectUrl = URL.createObjectURL(file);
 		const image = await new Promise<HTMLImageElement>((resolve, reject) => {
 			const img = new Image();
-			img.onload = () => resolve(img);
-			img.onerror = (err) => reject(err);
+			img.onload = () => {
+				resolve(img);
+			};
+			img.onerror = (err) => {
+				URL.revokeObjectURL(objectUrl);
+				reject(err);
+			};
 			img.src = objectUrl;
 		});
-		const canvas = document.createElement('canvas');
 		const sx = Math.max(0, Math.min(image.width, image.width * crop.left));
 		const sy = Math.max(0, Math.min(image.height, image.height * crop.top));
 		const sw = Math.max(1, image.width - image.width * (crop.left + crop.right));
 		const sh = Math.max(1, image.height - image.height * (crop.top + crop.bottom));
-		canvas.width = sw;
-		canvas.height = sh;
-		const ctx = canvas.getContext('2d');
-		if (!ctx) {
+		const cropCanvas = document.createElement('canvas');
+		cropCanvas.width = sw;
+		cropCanvas.height = sh;
+		const cropCtx = cropCanvas.getContext('2d');
+		if (!cropCtx) {
 			URL.revokeObjectURL(objectUrl);
 			throw new Error('Canvas not supported');
 		}
-		ctx.drawImage(image, sx, sy, sw, sh, 0, 0, sw, sh);
+		cropCtx.drawImage(image, sx, sy, sw, sh, 0, 0, sw, sh);
 		URL.revokeObjectURL(objectUrl);
+		const targetWidth = Math.min(sw, MAX_OCR_WIDTH);
+		const targetHeight = Math.max(1, Math.round((sh * targetWidth) / sw));
+		const resizeCanvas = document.createElement('canvas');
+		resizeCanvas.width = targetWidth;
+		resizeCanvas.height = targetHeight;
+		const resizeCtx = resizeCanvas.getContext('2d');
+		if (!resizeCtx) {
+			cropCanvas.width = 0;
+			cropCanvas.height = 0;
+			throw new Error('Canvas not supported');
+		}
+		resizeCtx.drawImage(cropCanvas, 0, 0, sw, sh, 0, 0, targetWidth, targetHeight);
+		cropCanvas.width = 0;
+		cropCanvas.height = 0;
 		const blob = await new Promise<Blob>((resolve, reject) => {
-			canvas.toBlob((b) => {
+			resizeCanvas.toBlob((b) => {
+				resizeCanvas.width = 0;
+				resizeCanvas.height = 0;
 				if (b) resolve(b);
 				else reject(new Error('Failed to crop image'));
 			}, 'image/png');
@@ -642,19 +695,25 @@ export default function TsumCountApp() {
 		async (files: FileList | null) => {
 			if (!files || files.length === 0) return;
 			setOcrLoading(true);
-			setOcrStatus('OCR処理中...');
+			setOcrStatus('OCR処理を開始します...');
+			setOcrProgress({ current: 0, total: files.length });
 			try {
-				const tasks = Array.from(files).map(async (file) => {
+				const worker = await ensureWorker();
+				const resolved: OcrResult[] = [];
+				for (let i = 0; i < files.length; i += 1) {
+					const file = files[i];
+					setOcrProgress({ current: i + 1, total: files.length });
+					setOcrStatus(`OCR処理中... (${i + 1} / ${files.length})`);
 					const id = crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 					const originalUrl = URL.createObjectURL(file);
 					let croppedUrl: string | undefined;
 					try {
 						const cropped = await cropImage(file, cropSetting);
 						croppedUrl = URL.createObjectURL(cropped);
-						const result = await Tesseract.recognize(cropped, 'jpn');
+						const result = await worker.recognize(cropped);
 						const text = normalizeText(result?.data?.text ?? '');
 						const matchedRow = text ? enrichedRows.find((row) => row.name === text) : undefined;
-						return {
+						resolved.push({
 							id,
 							text,
 							matched: Boolean(matchedRow),
@@ -663,24 +722,24 @@ export default function TsumCountApp() {
 							originalUrl,
 							croppedUrl,
 							skipped: false,
-						} satisfies OcrResult;
+						});
 					} catch (error) {
 						if (croppedUrl) URL.revokeObjectURL(croppedUrl);
 						URL.revokeObjectURL(originalUrl);
-						throw error;
+						console.error('OCR failed for one image', error);
 					}
-				});
-				const resolved = await Promise.all(tasks);
+				}
 				setOcrResults((prev) => [...prev, ...resolved]);
-				setOcrStatus(resolved.length ? 'OCR完了。結果を確認してください。' : '');
+				setOcrStatus(resolved.length ? 'OCR完了。結果を確認してください。' : 'OCR結果がありませんでした。');
 			} catch (err) {
 				console.error(err);
 				setOcrStatus('OCR処理に失敗しました。設定を見直して再試行してください。');
 			} finally {
 				setOcrLoading(false);
+				setOcrProgress({ current: 0, total: 0 });
 			}
 		},
-		[cropImage, cropSetting, enrichedRows],
+		[cropImage, cropSetting, ensureWorker, enrichedRows],
 	);
 
 	const handleConfirmOcr = useCallback(() => {
@@ -890,7 +949,12 @@ export default function TsumCountApp() {
 					</div>
 				</div>
 				{ocrStatus && <div className="ocr-status">{ocrStatus}</div>}
-				{ocrLoading && <div className="ocr-loading">処理中...</div>}
+				{ocrLoading && (
+					<div className="ocr-loading">処理中... ({ocrProgress.current} / {ocrProgress.total})</div>
+				)}
+				{ocrProgress.total > 0 && (
+					<div className="ocr-status">進捗: {ocrProgress.current} / {ocrProgress.total}</div>
+				)}
 				{ocrResults.length > 0 && (
 					<div className="ocr-results">
 						{ocrResults.map((res) => {
