@@ -93,6 +93,17 @@ const formatter = new Intl.NumberFormat('ja-JP');
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
 type TesseractWorker = Awaited<ReturnType<typeof createWorker>>;
+type CropImageResult = {
+	blob: Blob;
+	sourceWidth: number;
+	sourceHeight: number;
+	targetWidth: number;
+	targetHeight: number;
+};
+
+const TESSERACT_WORKER_PATH = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/worker.min.js';
+const TESSERACT_LANG_PATH = 'https://tessdata.projectnaptha.com/5';
+const TESSERACT_CORE_PATH = 'https://cdn.jsdelivr.net/npm/tesseract.js-core@5/tesseract-core.wasm.js';
 
 function getMaxLevel(needs: number[]): number {
 	for (let i = needs.length - 1; i >= 0; i -= 1) {
@@ -295,7 +306,20 @@ export default function TsumCountApp() {
 	const [ocrLoading, setOcrLoading] = useState(false);
 	const [ocrStatus, setOcrStatus] = useState('');
 	const [ocrProgress, setOcrProgress] = useState<{ current: number; total: number }>({ current: 0, total: 0 });
+	const [ocrLogs, setOcrLogs] = useState<string[]>([]);
 	const typeOptions = useMemo(() => Array.from(new Set(baseRows.map((r) => r.type))).sort((a, b) => a - b), [baseRows]);
+
+	const pushLog = useCallback((message: string) => {
+		const now = new Date();
+		const ts = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now
+			.getSeconds()
+			.toString()
+			.padStart(2, '0')}`;
+		setOcrLogs((prev) => {
+			const next = [...prev, `[${ts}] ${message}`];
+			return next.slice(-200);
+		});
+	}, []);
 
 	useEffect(() => {
 		persistState(state);
@@ -319,17 +343,38 @@ export default function TsumCountApp() {
 	const ensureWorker = useCallback(async () => {
 		if (workerRef.current) return workerRef.current;
 		if (!workerPromiseRef.current) {
+			pushLog('Worker: creating (Safari-safe paths)');
 			workerPromiseRef.current = (async () => {
-				const worker = await createWorker({});
-				await worker.load();
-				await worker.loadLanguage('jpn');
-				await worker.initialize('jpn');
-				workerRef.current = worker;
-				return worker;
+				try {
+					const worker = await createWorker({
+						workerPath: TESSERACT_WORKER_PATH,
+						langPath: TESSERACT_LANG_PATH,
+						corePath: TESSERACT_CORE_PATH,
+						logger: (m: { status?: string; progress?: number }) => {
+							if (!m?.status) return;
+							const progress = typeof m.progress === 'number' ? ` (${Math.round(m.progress * 100)}%)` : '';
+							pushLog(`Worker status: ${m.status}${progress}`);
+						},
+					});
+					pushLog('Worker: created');
+					await worker.load();
+					pushLog('Worker: loaded');
+					await worker.loadLanguage('jpn');
+					pushLog('Worker: language loaded');
+					await worker.initialize('jpn');
+					pushLog('Worker: initialized');
+					workerRef.current = worker;
+					return worker;
+				} catch (error) {
+					pushLog(`Worker init failed: ${(error as Error)?.message ?? error}`);
+					workerRef.current = null;
+					workerPromiseRef.current = null;
+					throw error;
+				}
 			})();
 		}
 		return workerPromiseRef.current;
-	}, []);
+	}, [pushLog]);
 
 	const enrichedRows = useMemo<EnrichedRow[]>(() => {
 		return baseRows.map((row) => {
@@ -623,6 +668,10 @@ export default function TsumCountApp() {
 		setOcrSearchMap({});
 	}, []);
 
+	const clearOcrLogs = useCallback(() => {
+		setOcrLogs([]);
+	}, []);
+
 	const hasBlockingOcr = useMemo(
 		() => ocrResults.some((res) => !res.skipped && !res.matched),
 		[ocrResults],
@@ -639,7 +688,7 @@ export default function TsumCountApp() {
 		reader.readAsText(file, 'utf-8');
 	};
 
-	const cropImage = useCallback(async (file: File, crop: CropSetting) => {
+	const cropImage = useCallback(async (file: File, crop: CropSetting): Promise<CropImageResult> => {
 		const objectUrl = URL.createObjectURL(file);
 		const image = await new Promise<HTMLImageElement>((resolve, reject) => {
 			const img = new Image();
@@ -688,30 +737,36 @@ export default function TsumCountApp() {
 				else reject(new Error('Failed to crop image'));
 			}, 'image/png');
 		});
-		return blob;
+		return { blob, sourceWidth: sw, sourceHeight: sh, targetWidth, targetHeight };
 	}, []);
 
 	const handleOcrFiles = useCallback(
 		async (files: FileList | null) => {
 			if (!files || files.length === 0) return;
 			setOcrLoading(true);
-			setOcrStatus('OCR処理を開始します...');
+			setOcrStatus('OCR処理中...');
 			setOcrProgress({ current: 0, total: files.length });
+			pushLog(`OCR start: ${files.length} file(s)`);
 			try {
 				const worker = await ensureWorker();
+				pushLog('Worker ready for OCR');
 				const resolved: OcrResult[] = [];
 				for (let i = 0; i < files.length; i += 1) {
 					const file = files[i];
 					setOcrProgress({ current: i + 1, total: files.length });
 					setOcrStatus(`OCR処理中... (${i + 1} / ${files.length})`);
+					pushLog(`[${file.name}] start (${i + 1}/${files.length})`);
 					const id = crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 					const originalUrl = URL.createObjectURL(file);
 					let croppedUrl: string | undefined;
 					try {
-						const cropped = await cropImage(file, cropSetting);
-						croppedUrl = URL.createObjectURL(cropped);
-						const result = await worker.recognize(cropped);
+						const { blob, sourceWidth, sourceHeight, targetWidth, targetHeight } = await cropImage(file, cropSetting);
+						pushLog(`[${file.name}] resized ${sourceWidth}x${sourceHeight} -> ${targetWidth}x${targetHeight}`);
+						croppedUrl = URL.createObjectURL(blob);
+						pushLog(`[${file.name}] recognize start`);
+						const result = await worker.recognize(blob);
 						const text = normalizeText(result?.data?.text ?? '');
+						pushLog(`[${file.name}] recognize done: ${text ? text : '(empty)'}`);
 						const matchedRow = text ? enrichedRows.find((row) => row.name === text) : undefined;
 						resolved.push({
 							id,
@@ -726,20 +781,21 @@ export default function TsumCountApp() {
 					} catch (error) {
 						if (croppedUrl) URL.revokeObjectURL(croppedUrl);
 						URL.revokeObjectURL(originalUrl);
-						console.error('OCR failed for one image', error);
+						pushLog(`[${file.name}] error: ${(error as Error)?.message ?? error}`);
+						setOcrStatus('OCR処理でエラーが発生しました。ログを確認してください。');
 					}
 				}
 				setOcrResults((prev) => [...prev, ...resolved]);
 				setOcrStatus(resolved.length ? 'OCR完了。結果を確認してください。' : 'OCR結果がありませんでした。');
 			} catch (err) {
-				console.error(err);
+				pushLog(`OCR fatal error: ${(err as Error)?.message ?? err}`);
 				setOcrStatus('OCR処理に失敗しました。設定を見直して再試行してください。');
 			} finally {
 				setOcrLoading(false);
 				setOcrProgress({ current: 0, total: 0 });
 			}
 		},
-		[cropImage, cropSetting, ensureWorker, enrichedRows],
+		[cropImage, cropSetting, ensureWorker, enrichedRows, pushLog],
 	);
 
 	const handleConfirmOcr = useCallback(() => {
@@ -954,6 +1010,29 @@ export default function TsumCountApp() {
 				)}
 				{ocrProgress.total > 0 && (
 					<div className="ocr-status">進捗: {ocrProgress.current} / {ocrProgress.total}</div>
+				)}
+				{ocrLogs.length > 0 && (
+					<div
+						className="ocr-log-panel"
+						style={{
+							marginTop: '12px',
+							background: '#0b0b0b',
+							color: '#0f0',
+							padding: '8px',
+							borderRadius: '8px',
+							fontSize: '12px',
+						}}
+					>
+						<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+							<strong>OCRログ</strong>
+							<button type="button" className="ghost-btn" onClick={clearOcrLogs}>
+								ログクリア
+							</button>
+						</div>
+						<pre style={{ maxHeight: 200, overflow: 'auto', whiteSpace: 'pre-wrap', margin: 0 }}>
+							{ocrLogs.join('\n')}
+						</pre>
+					</div>
 				)}
 				{ocrResults.length > 0 && (
 					<div className="ocr-results">
