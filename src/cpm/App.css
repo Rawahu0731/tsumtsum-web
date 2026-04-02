@@ -348,11 +348,21 @@ input[type="number"]:focus {
 .ranking-table {
   width: 100%;
   border-collapse: collapse;
+  min-width: 760px;
+}
+
+.history-table {
+  min-width: 680px;
+}
+
+.table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .ranking-table th {
   text-align: left;
-  padding: 1rem 0;
+  padding: 1rem 0.5rem;
   border-bottom: 2px solid var(--c-border);
   /* Thicker header line */
   font-size: 0.75rem;
@@ -372,7 +382,7 @@ input[type="number"]:focus {
 }
 
 .ranking-table td {
-  padding: 1rem 0;
+  padding: 1rem 0.5rem;
   border-bottom: 1px solid var(--c-border);
   font-size: 0.938rem;
   color: var(--c-text-primary);
@@ -497,8 +507,16 @@ input[type="number"]:focus {
   */
 
   .ranking-table {
-    width: 100%;
-    /* Keep normal table layout to ensure header and columns align.
-       Overflow is handled by the wrapper div in the component. */
+    min-width: 760px;
+  }
+
+  .history-table {
+    min-width: 680px;
+  }
+
+  .ranking-table th,
+  .ranking-table td {
+    white-space: nowrap;
+    padding: 0.75rem 0.5rem;
   }
 }

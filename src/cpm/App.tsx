@@ -6,6 +6,7 @@ import Usage from './pages/Usage'
 function CpmMain() {
   const [time, setTime] = useState('00:00');
   const [coins, setCoins] = useState(0);
+  const [terminal, setTerminal] = useState('');
   const [result, setResult] = useState<number | null>(null);
   const [score, setScore] = useState(false);
   const [coin, setCoin] = useState(true);
@@ -15,7 +16,7 @@ function CpmMain() {
   const [fivetofour, setFivetofour] = useState(true);
   const [character, setCharacter] = useState('');
   const [skill, setSkill] = useState(1);
-  const [entries, setEntries] = useState<Array<{ character: string; skill: number; cpm: number; ts: number; time?: string; coins?: number; items: { score: boolean; coin: boolean; exp: boolean; timeItem: boolean; bomb: boolean; fivetofour: boolean } }>>([]);
+  const [entries, setEntries] = useState<Array<{ character: string; skill: number; cpm: number; ts: number; time?: string; coins?: number; terminal?: string; items: { score: boolean; coin: boolean; exp: boolean; timeItem: boolean; bomb: boolean; fivetofour: boolean } }>>([]);
   const [importError, setImportError] = useState<string | null>(null);
   const [isOpening, setIsOpening] = useState(false);
   const [showUsage, setShowUsage] = useState(false);
@@ -52,6 +53,7 @@ function CpmMain() {
         ts: Number(e.ts || Date.now()),
         time: String(e.time || '00:00'),
         coins: Number(e.coins || e.coins === 0 ? e.coins : (e.coins === undefined ? 0 : Number(e.coins))),
+        terminal: String(e.terminal || ''),
         items: e.items || {
           score: !!e.score,
           coin: e.coin === undefined ? true : !!e.coin,
@@ -155,6 +157,7 @@ function CpmMain() {
       itemsEqual(e.items, newItems) &&
       String(e.time || '') === String(time || '') &&
       Number(e.coins || 0) === Number(coins || 0) &&
+      String(e.terminal || '').trim() === terminal.trim() &&
       Math.abs(Number(e.cpm || 0) - Number(result)) < 0.01
     );
 
@@ -163,7 +166,7 @@ function CpmMain() {
       return;
     }
 
-    const entry = { character: character.trim(), skill, cpm: result, ts: Date.now(), time, coins, items: newItems };
+    const entry = { character: character.trim(), skill, cpm: result, ts: Date.now(), time, coins, terminal: terminal.trim(), items: newItems };
     const next = [entry, ...entries];
     setEntries(next);
     saveEntriesToStorage(next);
@@ -209,6 +212,7 @@ function CpmMain() {
         const ts = Number(it.ts || Date.now());
         const timeVal = String(it.time || '00:00');
         const coinsVal = Number(it.coins || (it.coins === 0 ? 0 : (it.coins === undefined ? 0 : Number(it.coins))));
+        const terminalVal = String(it.terminal || '');
         const itemsObj = it.items || {
           score: !!it.score,
           coin: it.coin === undefined ? true : !!it.coin,
@@ -217,7 +221,7 @@ function CpmMain() {
           bomb: !!it.bomb,
           fivetofour: it.fivetofour === undefined ? true : !!it.fivetofour,
         };
-        items.push({ character, skill, cpm, ts, time: timeVal, coins: coinsVal, items: itemsObj });
+        items.push({ character, skill, cpm, ts, time: timeVal, coins: coinsVal, terminal: terminalVal, items: itemsObj });
       });
       const map = new Map<number, any>();
       entries.forEach(e => map.set(e.ts, e));
@@ -326,6 +330,19 @@ function CpmMain() {
             />
           </div>
           <div className="form-field">
+            <label>Terminal (Optional)</label>
+            <input
+              type='text'
+              value={terminal}
+              onChange={e => setTerminal(e.target.value)}
+              placeholder="端末名など"
+              style={{ fontSize: '16px' }}
+            />
+          </div>
+        </div>
+
+        <div className="form-row">
+          <div className="form-field">
             <label>Base Coin</label>
             <input
               type='number'
@@ -404,7 +421,7 @@ function CpmMain() {
         {entries.length === 0 ? (
           <div className="text-secondary text-center py-4">No Data Recorded</div>
         ) : (
-          <div style={{ overflowX: 'auto' }}>
+          <div className="table-wrap">
             <table className="ranking-table">
               <thead>
                 <tr>
@@ -454,12 +471,15 @@ function CpmMain() {
           entries.length === 0 ? (
             <div className="text-center py-4 text-secondary">No Recods</div>
           ) : (
-            <div style={{ overflowX: 'auto' }}>
-              <table className="ranking-table">
+            <div className="table-wrap">
+              <table className="ranking-table history-table">
                 <thead>
                   <tr>
                     <th>Character</th>
+                    <th>Terminal</th>
                     <th>Skill</th>
+                    <th className="text-right">Time</th>
+                    <th className="text-right">Coins</th>
                     <th className="text-right">Eff.</th>
                     <th className="text-right">Action</th>
                   </tr>
@@ -468,7 +488,10 @@ function CpmMain() {
                   {entries.map(e => (
                     <tr key={e.ts}>
                       <td>{e.character}</td>
+                      <td>{e.terminal || '-'}</td>
                       <td>{e.skill}</td>
+                      <td className="text-right text-mono">{String(e.time || '00:00')}</td>
+                      <td className="text-right text-mono">{Number(e.coins || 0).toFixed(0)}</td>
                       <td className="text-right text-mono"><strong>{Number(e.cpm).toFixed(0)}</strong></td>
                       <td className="text-right">
                         <button className="btn btn-danger" style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', height: 'auto' }} onClick={(ev) => { ev.stopPropagation(); handleDeleteEntry(e.ts); }}>Del</button>
