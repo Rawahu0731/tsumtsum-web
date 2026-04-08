@@ -642,7 +642,7 @@ export const data: DataRow[] = [
     { name: "ベイマックス＆モチ", type: 1, cookieId: 633, needs: [1, 1, 2, 4, 7, 14], defaultOwned: 0 },
     { name: "ワサビ", type: 1, cookieId: 634, needs: [1, 1, 2, 4, 8, 16], defaultOwned: 0 },
     { name: "ゴー・ゴー", type: 1, cookieId: 635, needs: [1, 1, 2, 4, 8, 16], defaultOwned: 0 },
-    { name: "スポーティーマックス", type:2, cookieId: 688, needs: [1, 1, 1, 1, 1, 1], defaultOwned: 0 },
+    { name: "スポーティーマックス", type: 2, cookieId: 688, needs: [1, 1, 1, 1, 1, 1], defaultOwned: 0 },
     { name: "ストリートスタイルミッキー", type: 3, cookieId: 636, needs: [1, 1, 1, 2, 2, 3], defaultOwned: 0 },
     { name: "カー", type: 0, cookieId: 637, needs: [1, 1, 2, 4, 7, 14], defaultOwned: 0 },
     { name: "ストリートスタイルスティッチ", type: 1, cookieId: 638, needs: [1, 1, 2, 4, 8, 20], defaultOwned: 0 },
@@ -722,5 +722,8 @@ export const data: DataRow[] = [
     { name: "江戸川コナン＋", type: 3, cookieId: 713, needs: [1, 2, 3, 0, 0, 0], defaultOwned: 0 },
     { name: "安室透", type: 1, cookieId: 714, needs: [1, 1, 2, 4, 8, 16], defaultOwned: 0 },
     { name: "灰原哀", type: 1, cookieId: 715, needs: [1, 1, 2, 4, 8, 16], defaultOwned: 0 },
-    
+    { name: "マジカルステッキミニー＜変身＞", type: 1, cookieId: 716, needs: [1, 1, 2, 4, 8, 20], defaultOwned: 0 },
+    { name: "マジカルステッキデイジー＜変身＞", type: 1, cookieId: 717, needs: [1, 1, 2, 4, 8, 20], defaultOwned: 0 },
+    { name: "マジカルステッキクラリス＜変身＞", type: 1, cookieId: 718, needs: [1, 1, 2, 4, 8, 20], defaultOwned: 0 },
+    { name: "ミステリアスナイトミッキー", type: 1, cookieId: 719, needs: [1, 1, 2, 4, 8, 16], defaultOwned: 0 },
 ];

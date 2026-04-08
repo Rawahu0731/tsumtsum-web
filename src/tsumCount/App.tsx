@@ -4,11 +4,10 @@ import './App.css';
 import { data as sourceData } from './data';
 
 const MONTHLY_NEW_NAMES = new Set([
-    'コナン＆キッド',
-    '毛利蘭',
-    '毛利小五郎',
-    '安室透',
-    '灰原哀',
+    'マジカルステッキミニー＜変身＞',
+    'マジカルステッキデイジー＜変身＞',
+    'マジカルステッキクラリス＜変身＞',
+    'ミステリアスナイトミッキー',
 ]);
 
 type TsumRow = {
