@@ -296,6 +296,7 @@ export default function TsumCountApp() {
 	const tableWrapRef = useRef<HTMLDivElement>(null);
 	const scrollTopRef = useRef<HTMLDivElement>(null);
 	const gachaInputRef = useRef<HTMLInputElement>(null);
+	const ocrSectionRef = useRef<HTMLHeadingElement>(null);
 	const workerRef = useRef<TesseractWorker | null>(null);
 	const workerPromiseRef = useRef<Promise<TesseractWorker> | null>(null);
 	const [tableWidth, setTableWidth] = useState(1200);
@@ -848,6 +849,11 @@ export default function TsumCountApp() {
 		});
 		setOcrStatus('所持数に反映しました');
 		clearOcrResults();
+		
+		// スクショOCR一括入力セクションまでスムーズにスクロール
+		requestAnimationFrame(() => {
+			ocrSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+		});
 	}, [baseMap, clearOcrResults, ocrResults]);
 
 	const renderAggregate = (label: string, agg: Aggregate) => (
@@ -945,7 +951,7 @@ export default function TsumCountApp() {
 
 			<section className="ocr-panel">
 				<div className="ocr-head">
-					<h2>スクショOCR一括入力</h2>
+					<h2 ref={ocrSectionRef}>スクショOCR一括入力</h2>
 					<p>複数画像をアップロードすると即OCRします。トリミング割合を調整して精度を上げられます。</p>
 				</div>
 				<div className="ocr-controls">
