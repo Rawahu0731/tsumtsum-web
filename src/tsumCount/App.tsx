@@ -55,12 +55,21 @@ type CropSetting = {
 export type OcrResult = {
 	id: string;
 	text: string;
+	searchText: string;
 	matched: boolean;
+	matchDistance?: number;
 	matchedRow?: EnrichedRow;
 	selectedCookieId?: number;
 	originalUrl: string;
 	croppedUrl: string;
 	skipped: boolean;
+};
+
+type OcrMatch = {
+	normalizedText: string;
+	matched: boolean;
+	matchedRow?: EnrichedRow;
+	matchDistance?: number;
 };
 
 const STORAGE_KEY = 'tsum-count-state-v1';
@@ -226,8 +235,66 @@ function persistCropSetting(setting: CropSetting) {
 }
 
 function normalizeText(text: string) {
-	// Remove half-width spaces entirely, then strip any remaining whitespace/newlines
-	return text.replace(/ /g, '').replace(/\s+/g, '').trim();
+	// Remove periods and whitespace before matching.
+	return text.replace(/\./g, '').replace(/ /g, '').replace(/\s+/g, '').trim();
+}
+
+function levenshteinDistance(a: string, b: string) {
+	if (a === b) return 0;
+	const aLen = a.length;
+	const bLen = b.length;
+	if (aLen === 0) return bLen;
+	if (bLen === 0) return aLen;
+
+	let prev = new Array<number>(bLen + 1);
+	let curr = new Array<number>(bLen + 1);
+	for (let j = 0; j <= bLen; j += 1) {
+		prev[j] = j;
+	}
+
+	for (let i = 1; i <= aLen; i += 1) {
+		curr[0] = i;
+		const aCode = a.charCodeAt(i - 1);
+		for (let j = 1; j <= bLen; j += 1) {
+			const cost = aCode === b.charCodeAt(j - 1) ? 0 : 1;
+			curr[j] = Math.min(prev[j] + 1, curr[j - 1] + 1, prev[j - 1] + cost);
+		}
+		const temp = prev;
+		prev = curr;
+		curr = temp;
+	}
+
+	return prev[bLen];
+}
+
+function resolveOcrMatch(text: string, rows: EnrichedRow[]): OcrMatch {
+	const normalizedText = normalizeText(text);
+	if (!normalizedText) {
+		return { normalizedText, matched: false };
+	}
+
+	let bestRow: EnrichedRow | undefined;
+	let bestDistance = Number.POSITIVE_INFINITY;
+
+	for (const row of rows) {
+		const distance = levenshteinDistance(normalizedText, normalizeText(row.name));
+		if (distance < bestDistance) {
+			bestDistance = distance;
+			bestRow = row;
+			if (bestDistance === 0) break;
+		}
+	}
+
+	if (!bestRow || bestDistance >= 3) {
+		return { normalizedText, matched: false };
+	}
+
+	return {
+		normalizedText,
+		matched: true,
+		matchedRow: bestRow,
+		matchDistance: bestDistance,
+	};
 }
 
 function progressBar(level: number, maxLevel: number) {
@@ -302,7 +369,6 @@ export default function TsumCountApp() {
 	const [tableWidth, setTableWidth] = useState(1200);
 	const [cropSetting, setCropSetting] = useState<CropSetting>(() => loadCropSetting());
 	const [ocrResults, setOcrResults] = useState<OcrResult[]>([]);
-	const [ocrSearchMap, setOcrSearchMap] = useState<Record<string, string>>({});
 	const [ocrLoading, setOcrLoading] = useState(false);
 	const [ocrStatus, setOcrStatus] = useState('');
 	const [ocrProgress, setOcrProgress] = useState<{ current: number; total: number }>({ current: 0, total: 0 });
@@ -612,6 +678,8 @@ export default function TsumCountApp() {
 							selectedCookieId: matchedRow?.cookieId,
 							matchedRow: matchedRow ?? item.matchedRow,
 							matched: Boolean(matchedRow),
+							searchText: matchedRow?.name ?? item.searchText,
+							matchDistance: matchedRow ? 0 : item.matchDistance,
 							skipped: false,
 						}
 						: item,
@@ -623,26 +691,44 @@ export default function TsumCountApp() {
 
 	const updateResultText = useCallback(
 		(id: string, text: string) => {
-			const normalized = normalizeText(text);
-			const hit = enrichedRows.find((r) => r.name === normalized);
+			const match = resolveOcrMatch(text, enrichedRows);
+			const shouldReplaceSearchText =
+				match.matchedRow && typeof match.matchDistance === 'number' && match.matchDistance > 0;
+			const searchText = shouldReplaceSearchText && match.matchedRow
+				? match.matchedRow.name
+				: match.normalizedText;
 			setOcrResults((prev) =>
 				prev.map((item) =>
 					item.id === id
 						? {
 							...item,
-							text: normalized,
-							matched: Boolean(hit),
-							matchedRow: hit,
-							selectedCookieId: hit?.cookieId ?? item.selectedCookieId,
-							skipped: Boolean(hit) ? false : item.skipped,
+							text: match.normalizedText,
+							searchText,
+							matched: match.matched,
+							matchedRow: match.matchedRow,
+							matchDistance: match.matchDistance,
+							selectedCookieId: match.matchedRow?.cookieId ?? item.selectedCookieId,
+							skipped: match.matched ? false : item.skipped,
 						}
 						: item,
 				),
 			);
-			setOcrSearchMap((prev) => ({ ...prev, [id]: normalized }));
 		},
 		[enrichedRows],
 	);
+
+	const updateSearchText = useCallback((id: string, text: string) => {
+		setOcrResults((prev) =>
+			prev.map((item) =>
+				item.id === id
+					? {
+						...item,
+						searchText: text,
+						}
+					: item,
+			),
+		);
+	}, []);
 
 	const toggleSkip = useCallback((id: string, skipped: boolean) => {
 		setOcrResults((prev) =>
@@ -665,7 +751,6 @@ export default function TsumCountApp() {
 			});
 			return [];
 		});
-		setOcrSearchMap({});
 	}, []);
 
 	const clearOcrLogs = useCallback(() => {
@@ -777,6 +862,7 @@ export default function TsumCountApp() {
 						baseResult = {
 							id,
 							text: '',
+							searchText: '',
 							matched: false,
 							matchedRow: undefined,
 							selectedCookieId: undefined,
@@ -792,13 +878,20 @@ export default function TsumCountApp() {
 						baseResult.croppedUrl = URL.createObjectURL(blob);
 						pushLog(`[${file.name}] recognize start`);
 						const result = await worker.recognize(blob);
-						const text = normalizeText(result?.data?.text ?? '');
-						pushLog(`[${file.name}] recognize done: ${text ? text : '(empty)'}`);
-						const matchedRow = text ? enrichedRows.find((row) => row.name === text) : undefined;
-						baseResult.text = text;
-						baseResult.matched = Boolean(matchedRow);
-						baseResult.matchedRow = matchedRow;
-						baseResult.selectedCookieId = matchedRow?.cookieId;
+						const rawText = result?.data?.text ?? '';
+						const match = resolveOcrMatch(rawText, enrichedRows);
+						pushLog(`[${file.name}] recognize done: ${match.normalizedText ? match.normalizedText : '(empty)'}`);
+						const shouldReplaceSearchText =
+							match.matchedRow && typeof match.matchDistance === 'number' && match.matchDistance > 0;
+						const searchText = shouldReplaceSearchText && match.matchedRow
+							? match.matchedRow.name
+							: match.normalizedText;
+						baseResult.text = match.normalizedText;
+						baseResult.searchText = searchText;
+						baseResult.matched = match.matched;
+						baseResult.matchedRow = match.matchedRow;
+						baseResult.matchDistance = match.matchDistance;
+						baseResult.selectedCookieId = match.matchedRow?.cookieId;
 					} catch (error) {
 						hadError = true;
 						pushLog(`file loop error: ${(error as Error)?.message ?? error}`);
@@ -1073,11 +1166,13 @@ export default function TsumCountApp() {
 				{ocrResults.length > 0 && (
 					<div className="ocr-results">
 						{ocrResults.map((res) => {
-							const searchText = ocrSearchMap[res.id] ?? res.text;
+							const ocrText = res.text;
+							const searchText = res.searchText ?? res.text;
 							const keyword = searchText.trim().toLowerCase();
 							const candidates = enrichedRows
 								.filter((row) => row.name.toLowerCase().includes(keyword))
 								.slice(0, 8);
+							const isNearMatch = res.matched && !res.skipped && typeof res.matchDistance === 'number' && res.matchDistance > 0;
 							const statusClass = res.skipped
 								? 'ocr-tag-skip'
 								: res.matched
@@ -1085,7 +1180,12 @@ export default function TsumCountApp() {
 									: 'ocr-tag-miss';
 							const statusText = res.skipped ? 'スキップ' : res.matched ? '一致' : '未一致';
 							return (
-								<div key={res.id} className={`ocr-card ${!res.matched && !res.skipped ? 'ocr-card-unmatched' : ''}`}>
+								<div
+									key={res.id}
+									className={`ocr-card ${!res.matched && !res.skipped ? 'ocr-card-unmatched' : ''} ${
+										isNearMatch ? 'ocr-card-near' : ''
+									}`}
+								>
 									<div className="ocr-image-grid">
 										<div className="ocr-image-wrap">
 											<img src={res.originalUrl} alt={res.text || 'upload'} className="ocr-image" />
@@ -1099,7 +1199,7 @@ export default function TsumCountApp() {
 											<label className="ocr-label">OCR結果</label>
 											<input
 												className="ocr-text-input"
-												value={searchText}
+												value={ocrText}
 												onChange={(e) => updateResultText(res.id, e.target.value)}
 											/>
 										</div>
@@ -1123,7 +1223,7 @@ export default function TsumCountApp() {
 											<input
 												className="ocr-text-input"
 												value={searchText}
-												onChange={(e) => updateResultText(res.id, e.target.value)}
+												onChange={(e) => updateSearchText(res.id, e.target.value)}
 												placeholder="例: ミッキー"
 											/>
 											<div className="ocr-candidates">
