@@ -52,6 +52,14 @@ type CropSetting = {
 	right: number;
 };
 
+type PremiumGoalPlan = {
+	daysRemaining: number;
+	weeksRemaining: number;
+	dailyCoinRequired: number;
+	weeklyCoinRequired: number;
+	isPast: boolean;
+};
+
 export type OcrResult = {
 	id: string;
 	text: string;
@@ -73,7 +81,9 @@ type OcrMatch = {
 };
 
 const STORAGE_KEY = 'tsum-count-state-v1';
+const WALLET_STORAGE_KEY = 'tsumtsum-wallet-data';
 const OCR_CROP_STORAGE_KEY = 'tsum-ocr-crop-v1';
+const PREMIUM_GOAL_DATE_STORAGE_KEY = 'tsum-premium-goal-date-v1';
 const MAX_OCR_WIDTH = 1000;
 const DEFAULT_CROP: CropSetting = {
 	top: 0.1,
@@ -81,6 +91,7 @@ const DEFAULT_CROP: CropSetting = {
 	left: 0.05,
 	right: 0.05,
 };
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
 // プラスツム(type=5)をメダルツムとして扱う。
 const MEDAL_TYPES = new Set([5]);
@@ -234,6 +245,88 @@ function persistCropSetting(setting: CropSetting) {
 	}
 }
 
+function parseInputDate(value: string): Date | null {
+	if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+	const [year, month, day] = value.split('-').map(Number);
+	const date = new Date(year, month - 1, day);
+	if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) return null;
+	return date;
+}
+
+function toDateInputValue(date: Date): string {
+	const y = date.getFullYear();
+	const m = `${date.getMonth() + 1}`.padStart(2, '0');
+	const d = `${date.getDate()}`.padStart(2, '0');
+	return `${y}-${m}-${d}`;
+}
+
+function startOfDay(date: Date): Date {
+	return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function loadPremiumGoalDate(): string {
+	try {
+		const raw = localStorage.getItem(PREMIUM_GOAL_DATE_STORAGE_KEY);
+		if (!raw) return '';
+		return parseInputDate(raw) ? raw : '';
+	} catch (err) {
+		console.error('Failed to load premium goal date', err);
+		return '';
+	}
+}
+
+function loadWalletCurrentCoin(): number {
+	try {
+		const raw = localStorage.getItem(WALLET_STORAGE_KEY);
+		if (!raw) return 0;
+
+		const parsed = JSON.parse(raw) as {
+			initialCoinAmount?: unknown;
+			records?: Array<{ coinAmount?: unknown; timestamp?: unknown }>;
+		};
+
+		const records = Array.isArray(parsed.records) ? parsed.records : [];
+		if (records.length > 0) {
+			const latest = records.reduce((acc, record) => {
+				const currentTs = typeof record.timestamp === 'number' && Number.isFinite(record.timestamp)
+					? record.timestamp
+					: Number.NEGATIVE_INFINITY;
+				const accTs = typeof acc.timestamp === 'number' && Number.isFinite(acc.timestamp)
+					? acc.timestamp
+					: Number.NEGATIVE_INFINITY;
+				return currentTs >= accTs ? record : acc;
+			}, records[0]);
+
+			const latestCoin = Number(latest.coinAmount);
+			if (Number.isFinite(latestCoin)) {
+				return Math.max(0, latestCoin);
+			}
+		}
+
+		const initialCoin = Number(parsed.initialCoinAmount);
+		if (Number.isFinite(initialCoin)) {
+			return Math.max(0, initialCoin);
+		}
+
+		return 0;
+	} catch (err) {
+		console.error('Failed to load wallet current coin', err);
+		return 0;
+	}
+}
+
+function persistPremiumGoalDate(value: string) {
+	try {
+		if (!value) {
+			localStorage.removeItem(PREMIUM_GOAL_DATE_STORAGE_KEY);
+			return;
+		}
+		localStorage.setItem(PREMIUM_GOAL_DATE_STORAGE_KEY, value);
+	} catch (err) {
+		console.error('Failed to save premium goal date', err);
+	}
+}
+
 function normalizeText(text: string) {
 	// Remove periods and whitespace before matching.
 	return text.replace(/\./g, '').replace(/ /g, '').replace(/\s+/g, '').trim();
@@ -373,6 +466,9 @@ export default function TsumCountApp() {
 	const [ocrStatus, setOcrStatus] = useState('');
 	const [ocrProgress, setOcrProgress] = useState<{ current: number; total: number }>({ current: 0, total: 0 });
 	const [ocrLogs, setOcrLogs] = useState<string[]>([]);
+	const [ocrLogOpen, setOcrLogOpen] = useState(false);
+	const [premiumGoalDate, setPremiumGoalDate] = useState<string>(() => loadPremiumGoalDate());
+	const [walletCurrentCoin, setWalletCurrentCoin] = useState<number>(() => loadWalletCurrentCoin());
 	const typeOptions = useMemo(() => Array.from(new Set(baseRows.map((r) => r.type))).sort((a, b) => a - b), [baseRows]);
 
 	const pushLog = useCallback((message: string) => {
@@ -394,6 +490,23 @@ export default function TsumCountApp() {
 	useEffect(() => {
 		persistCropSetting(cropSetting);
 	}, [cropSetting]);
+
+	useEffect(() => {
+		persistPremiumGoalDate(premiumGoalDate);
+	}, [premiumGoalDate]);
+
+	useEffect(() => {
+		const refreshWalletCoin = () => {
+			setWalletCurrentCoin(loadWalletCurrentCoin());
+		};
+
+		window.addEventListener('focus', refreshWalletCoin);
+		window.addEventListener('storage', refreshWalletCoin);
+		return () => {
+			window.removeEventListener('focus', refreshWalletCoin);
+			window.removeEventListener('storage', refreshWalletCoin);
+		};
+	}, []);
 
 	useEffect(() => {
 		return () => {
@@ -541,6 +654,41 @@ export default function TsumCountApp() {
 		[enrichedRows],
 	);
 	const premiumAggregate = useMemo(() => aggregate(premiumBoxRows), [premiumBoxRows]);
+	const premiumCoinsToEarn = useMemo(
+		() => Math.max(0, premiumAggregate.coinCost - walletCurrentCoin),
+		[premiumAggregate.coinCost, walletCurrentCoin],
+	);
+	const premiumGoalPlan = useMemo<PremiumGoalPlan | null>(() => {
+		const targetDate = parseInputDate(premiumGoalDate);
+		if (!targetDate) return null;
+
+		const today = startOfDay(new Date());
+		const target = startOfDay(targetDate);
+		const daysRemaining = Math.floor((target.getTime() - today.getTime()) / MS_PER_DAY) + 1;
+
+		if (daysRemaining <= 0) {
+			return {
+				daysRemaining: 0,
+				weeksRemaining: 0,
+				dailyCoinRequired: 0,
+				weeklyCoinRequired: 0,
+				isPast: true,
+			};
+		}
+
+		const dailyCoinRequired = premiumCoinsToEarn > 0 ? Math.ceil(premiumCoinsToEarn / daysRemaining) : 0;
+		const weeklyCoinRequired = premiumCoinsToEarn > 0
+			? Math.ceil((premiumCoinsToEarn / daysRemaining) * 7)
+			: 0;
+
+		return {
+			daysRemaining,
+			weeksRemaining: Number((daysRemaining / 7).toFixed(2)),
+			dailyCoinRequired,
+			weeklyCoinRequired,
+			isPast: false,
+		};
+	}, [premiumCoinsToEarn, premiumGoalDate]);
 
 	useEffect(() => {
 		const updateWidth = () => {
@@ -755,6 +903,7 @@ export default function TsumCountApp() {
 
 	const clearOcrLogs = useCallback(() => {
 		setOcrLogs([]);
+		setOcrLogOpen(false);
 	}, []);
 
 	const hasBlockingOcr = useMemo(
@@ -978,7 +1127,7 @@ export default function TsumCountApp() {
 			<header className="tsum-header">
 				<div>
 					<p className="eyebrow">TSUM SKILL TRACKER</p>
-					<h1>スキル進行・コイン/メダル計算 V3</h1>
+					<h1>スキル進行・コイン/メダル計算</h1>
 				</div>
 				<div className="header-actions">
 					<button type="button" onClick={downloadCsv} className="ghost-btn">
@@ -1141,26 +1290,20 @@ export default function TsumCountApp() {
 					<div className="ocr-status">進捗: {ocrProgress.current} / {ocrProgress.total}</div>
 				)}
 				{ocrLogs.length > 0 && (
-					<div
-						className="ocr-log-panel"
-						style={{
-							marginTop: '12px',
-							background: '#0b0b0b',
-							color: '#0f0',
-							padding: '8px',
-							borderRadius: '8px',
-							fontSize: '12px',
-						}}
-					>
-						<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-							<strong>OCRログ</strong>
+					<div className="ocr-log-panel">
+						<div className="ocr-log-head">
+							<button
+								type="button"
+								className="ghost-btn ocr-log-toggle"
+								onClick={() => setOcrLogOpen((prev) => !prev)}
+							>
+								{ocrLogOpen ? 'OCRログを隠す' : `OCRログを表示 (${ocrLogs.length})`}
+							</button>
 							<button type="button" className="ghost-btn" onClick={clearOcrLogs}>
 								ログクリア
 							</button>
 						</div>
-						<pre style={{ maxHeight: 200, overflow: 'auto', whiteSpace: 'pre-wrap', margin: 0 }}>
-							{ocrLogs.join('\n')}
-						</pre>
+						{ocrLogOpen && <pre className="ocr-log-body">{ocrLogs.join('\n')}</pre>}
 					</div>
 				)}
 				{ocrResults.length > 0 && (
@@ -1419,6 +1562,48 @@ export default function TsumCountApp() {
 			<section className="summary">
 				<h2>プレミアムボックス完売まで</h2>
 				<p className="summary-note">常駐ツムと今月の新ツムを全てスキルマにする必要があります。</p>
+				<p className="summary-note">
+					計算式: （必要コイン {formatter.format(premiumAggregate.coinCost)} - wallet現在コイン {formatter.format(walletCurrentCoin)}）÷ 残り日数
+				</p>
+				<div className="premium-goal-controls">
+					<label className="premium-goal-field">
+						<span>プレボ完売目標日</span>
+						<input
+							type="date"
+							min={toDateInputValue(new Date())}
+							value={premiumGoalDate}
+							onChange={(e) => setPremiumGoalDate(e.target.value)}
+						/>
+					</label>
+					<button
+						type="button"
+						className="ghost-btn"
+						onClick={() => setPremiumGoalDate('')}
+						disabled={!premiumGoalDate}
+					>
+						目標日クリア
+					</button>
+				</div>
+				{!premiumGoalDate && <p className="summary-note">目標日を設定すると、1日/1週あたり必要コインを表示します。</p>}
+				{premiumGoalPlan?.isPast && <p className="summary-note premium-goal-alert">目標日が過去です。今日以降の日付を指定してください。</p>}
+				{premiumGoalPlan && !premiumGoalPlan.isPast && (
+					<div className="premium-goal-grid">
+						<div className="premium-goal-card">
+							<div className="premium-goal-title">残り期間</div>
+							<div className="premium-goal-value">
+								{premiumGoalPlan.daysRemaining} 日（約 {premiumGoalPlan.weeksRemaining.toFixed(2)} 週）
+							</div>
+						</div>
+						<div className="premium-goal-card">
+							<div className="premium-goal-title">1日あたり必要コイン</div>
+							<div className="premium-goal-value">{formatter.format(premiumGoalPlan.dailyCoinRequired)} coin</div>
+						</div>
+						<div className="premium-goal-card">
+							<div className="premium-goal-title">1週あたり必要コイン</div>
+							<div className="premium-goal-value">{formatter.format(premiumGoalPlan.weeklyCoinRequired)} coin</div>
+						</div>
+					</div>
+				)}
 				<div className="agg-list">
 					{renderAggregate('常駐 + 今月新ツム', premiumAggregate)}
 				</div>

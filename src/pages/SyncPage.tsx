@@ -86,22 +86,28 @@ export default function SyncPage() {
     }
   };
 
-  const ensureUserAndQuota = (): { user: User; remaining: number } | null => {
-    const nextRemaining = updateRemaining((value) => setState((prev) => ({ ...prev, remaining: value })));
+  const ensureUser = (): User | null => {
     if (!state.user) {
       setError('ログインが必要です。');
       return null;
     }
+    return state.user;
+  };
+
+  const ensureSaveQuota = (): number | null => {
+    const nextRemaining = updateRemaining((value) => setState((prev) => ({ ...prev, remaining: value })));
     if (nextRemaining <= 0) {
       setError('本日の上限（10回）に達しました。');
       return null;
     }
-    return { user: state.user, remaining: nextRemaining };
+    return nextRemaining;
   };
 
   const handleSave = async () => {
-    const context = ensureUserAndQuota();
-    if (!context) return;
+    const user = ensureUser();
+    if (!user) return;
+    const hasQuota = ensureSaveQuota();
+    if (hasQuota === null) return;
 
     const walletRaw = localStorage.getItem(WALLET_KEY);
     const cpmRaw = localStorage.getItem(CPM_KEY);
@@ -117,7 +123,7 @@ export default function SyncPage() {
     setIsSaving(true);
     setStatus('クラウドに保存中…');
     try {
-      const ref = doc(db, 'users', context.user.uid);
+      const ref = doc(db, 'users', user.uid);
       await setDoc(ref, { wallet: walletData, cpm: cpmData, tsumCount: tsumCountData, updatedAt: serverTimestamp() });
       const nextCount = incrementCounter();
       setState((prev) => ({ ...prev, remaining: Math.max(0, SYNC_LIMIT - nextCount) }));
@@ -130,13 +136,13 @@ export default function SyncPage() {
   };
 
   const handleRestore = async () => {
-    const context = ensureUserAndQuota();
-    if (!context) return;
+    const user = ensureUser();
+    if (!user) return;
 
     setIsRestoring(true);
     setStatus('クラウドから読み込み中…');
     try {
-      const ref = doc(db, 'users', context.user.uid);
+      const ref = doc(db, 'users', user.uid);
       const snap = await getDoc(ref);
       if (!snap.exists()) {
         setError('クラウドデータが見つかりません。');
@@ -146,8 +152,6 @@ export default function SyncPage() {
       localStorage.setItem(WALLET_KEY, JSON.stringify(data.wallet ?? {}));
       localStorage.setItem(CPM_KEY, JSON.stringify(data.cpm ?? []));
       localStorage.setItem(TSUMCOUNT_KEY, JSON.stringify(data.tsumCount ?? {}));
-      const nextCount = incrementCounter();
-      setState((prev) => ({ ...prev, remaining: Math.max(0, SYNC_LIMIT - nextCount) }));
       setStatus('クラウドから復元しました。');
     } catch (err) {
       setError(`クラウドからの復元に失敗しました: ${err instanceof Error ? err.message : String(err)}`);
@@ -185,7 +189,7 @@ export default function SyncPage() {
                 className="btn-secondary"
                 type="button"
                 onClick={handleRestore}
-                disabled={isSaving || isRestoring || state.remaining <= 0}
+                disabled={isSaving || isRestoring}
               >
                 クラウドから復元
               </button>
