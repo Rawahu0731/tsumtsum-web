@@ -8,6 +8,7 @@ const MONTHLY_NEW_NAMES = new Set([
     'マジカルステッキデイジー＜変身＞',
     'マジカルステッキクラリス＜変身＞',
     'ミステリアスナイトミッキー',
+	'メイベル＋'
 ]);
 
 type TsumRow = {

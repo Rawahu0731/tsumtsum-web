@@ -723,7 +723,8 @@ export const data: DataRow[] = [
     { name: "安室透", type: 1, cookieId: 714, needs: [1, 1, 2, 4, 8, 16], defaultOwned: 0 },
     { name: "灰原哀", type: 1, cookieId: 715, needs: [1, 1, 2, 4, 8, 16], defaultOwned: 0 },
     { name: "マジカルステッキミニー＜変身＞", type: 1, cookieId: 716, needs: [1, 1, 2, 4, 8, 20], defaultOwned: 0 },
-    { name: "マジカルステッキデイジー＜変身＞", type: 1, cookieId: 717, needs: [1, 1, 2, 4, 8, 20], defaultOwned: 0 },
+    { name: "マジカルステッキデイジー＜変身＞", type: 1, cookieId: 717, needs: [1, 1, 2, 4, 8, 16], defaultOwned: 0 },
     { name: "マジカルステッキクラリス＜変身＞", type: 1, cookieId: 718, needs: [1, 1, 2, 4, 8, 20], defaultOwned: 0 },
     { name: "ミステリアスナイトミッキー", type: 1, cookieId: 719, needs: [1, 1, 2, 4, 8, 16], defaultOwned: 0 },
+    { name: "メイベル＋", type: 5, cookieId: 720, needs: [1, 1, 2, 4, 8, 20], defaultOwned: 0 },
 ];
