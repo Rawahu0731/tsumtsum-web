@@ -230,6 +230,20 @@ export default function StatsPage() {
         return getThisWeekEarned(records);
     }, [records]);
 
+    const today = new Date();
+    const weekEnd = endOfWeek(today, { weekStartsOn: 1 });
+    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const weekEndStart = new Date(weekEnd.getFullYear(), weekEnd.getMonth(), weekEnd.getDate());
+    const weekDaysRemaining = Math.max(1, Math.floor((weekEndStart.getTime() - todayStart.getTime()) / (24 * 60 * 60 * 1000)) + 1);
+
+    const weeklyPrimaryGoal = appData?.settings?.weeklyPrimaryGoal ?? 0;
+    const weeklySecondaryGoalRaw = appData?.settings?.weeklySecondaryGoal ?? 0;
+    const weeklySecondaryGoal = weeklySecondaryGoalRaw <= weeklyPrimaryGoal ? weeklyPrimaryGoal + 100 : weeklySecondaryGoalRaw;
+    const remainingToWeeklyPrimary = Math.max(0, weeklyPrimaryGoal - thisWeekEarned);
+    const remainingToWeeklySecondary = Math.max(0, weeklySecondaryGoal - thisWeekEarned);
+    const dailyNeededForPrimary = Math.ceil(remainingToWeeklyPrimary / weekDaysRemaining);
+    const dailyNeededForSecondary = Math.ceil(remainingToWeeklySecondary / weekDaysRemaining);
+
     const currentCoins = appData ? getLastCoinAmount(appData) : 0;
     const targetTotal = currentCoins + remainingToDisplayedGoal;
 
@@ -646,8 +660,7 @@ export default function StatsPage() {
                                 {/* 達成率は第一段階基準 */}
                                 <div className="weekly-progress__rate">
                                     {(() => {
-                                        const wp = appData?.settings?.weeklyPrimaryGoal ?? 0;
-                                        const rate = wp > 0 ? (thisWeekEarned / wp) * 100 : 0;
+                                        const rate = weeklyPrimaryGoal > 0 ? (thisWeekEarned / weeklyPrimaryGoal) * 100 : 0;
                                         return `${Math.round(rate * 10) / 10}%`;
                                     })()}
                                 </div>
@@ -655,11 +668,8 @@ export default function StatsPage() {
 
                             <div className="weekly-progress__bar" aria-hidden>
                                 {(() => {
-                                    const wp = appData?.settings?.weeklyPrimaryGoal ?? 0;
-                                    let ws = appData?.settings?.weeklySecondaryGoal ?? 0;
-                                    if (ws <= wp) ws = wp + 100;
-                                    const fillPercent = ws > 0 ? Math.min(100, (thisWeekEarned / ws) * 100) : 0;
-                                    const primaryPercent = ws > 0 ? Math.min(100, (wp / ws) * 100) : 0;
+                                    const fillPercent = weeklySecondaryGoal > 0 ? Math.min(100, (thisWeekEarned / weeklySecondaryGoal) * 100) : 0;
+                                    const primaryPercent = weeklySecondaryGoal > 0 ? Math.min(100, (weeklyPrimaryGoal / weeklySecondaryGoal) * 100) : 0;
                                     return (
                                         <>
                                             <div className="weekly-progress__fill" style={{ width: `${fillPercent}%` }} />
@@ -672,34 +682,31 @@ export default function StatsPage() {
 
                             <div className="weekly-progress__info">
                                 {(() => {
-                                    const wp = appData?.settings?.weeklyPrimaryGoal ?? 0;
-                                    let ws = appData?.settings?.weeklySecondaryGoal ?? 0;
-                                    if (ws <= wp) ws = wp + 100;
-                                    if (wp <= 0) return <div className="empty-state">週目標が設定されていません。</div>;
-                                    if (thisWeekEarned < wp) {
-                                        const remaining = wp - thisWeekEarned;
-                                        const rate = Math.round((thisWeekEarned / wp) * 1000) / 10;
+                                    if (weeklyPrimaryGoal <= 0) return <div className="empty-state">週目標が設定されていません。</div>;
+                                    if (thisWeekEarned < weeklyPrimaryGoal) {
+                                        const rate = Math.round((thisWeekEarned / weeklyPrimaryGoal) * 1000) / 10;
                                         return (
                                             <div>
-                                                <div>第一段階目標: {formatNumber(wp)} コイン</div>
-                                                <div>第一段階まであと {formatNumber(remaining)} コイン</div>
+                                                <div>第一段階目標: {formatNumber(weeklyPrimaryGoal)} コイン</div>
+                                                <div>第一段階まであと {formatNumber(remainingToWeeklyPrimary)} コイン</div>
+                                                <div className="weekly-progress__daily">今週残り {weekDaysRemaining} 日で 1日あたり {formatNumber(dailyNeededForPrimary)} コイン必要</div>
                                                 <div style={{ marginTop: 6, color: '#666' }}>達成率: {rate}%</div>
                                             </div>
                                         );
                                     }
-                                    if (thisWeekEarned >= wp && thisWeekEarned < ws) {
-                                        const remaining = ws - thisWeekEarned;
-                                        const rate = Math.round((thisWeekEarned / wp) * 1000) / 10;
+                                    if (thisWeekEarned >= weeklyPrimaryGoal && thisWeekEarned < weeklySecondaryGoal) {
+                                        const rate = Math.round((thisWeekEarned / weeklyPrimaryGoal) * 1000) / 10;
                                         return (
                                             <div>
-                                                <div>第二段階目標: {formatNumber(ws)} コイン</div>
-                                                <div>第二段階まであと {formatNumber(remaining)} コイン</div>
+                                                <div>第二段階目標: {formatNumber(weeklySecondaryGoal)} コイン</div>
+                                                <div>第二段階まであと {formatNumber(remainingToWeeklySecondary)} コイン</div>
+                                                <div className="weekly-progress__daily">今週残り {weekDaysRemaining} 日で 1日あたり {formatNumber(dailyNeededForSecondary)} コイン必要</div>
                                                 <div style={{ marginTop: 6, color: '#666' }}>達成率: {rate}%</div>
                                             </div>
                                         );
                                     }
                                     // 第二段階達成
-                                    const rate = Math.round((thisWeekEarned / wp) * 1000) / 10;
+                                    const rate = Math.round((thisWeekEarned / weeklyPrimaryGoal) * 1000) / 10;
                                     return (
                                         <div>
                                             <div>達成率: {rate}%</div>

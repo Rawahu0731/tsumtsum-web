@@ -400,6 +400,12 @@
     color: #444;
 }
 
+.weekly-progress__daily {
+    margin-top: 6px;
+    font-size: 0.85rem;
+    color: #666;
+}
+
 /* レスポンシブ */
 @media (max-width: 768px) {
     .stats-page__content {

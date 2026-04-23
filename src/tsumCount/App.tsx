@@ -159,7 +159,8 @@ function piecesToLevel(pieces: number, needs: number[], maxLevel: number): numbe
 			remaining -= cost;
 		} else {
 			const fraction = cost === 0 ? 0 : remaining / cost;
-			return Number((i + fraction).toFixed(2));
+			const rawLevel = i + fraction;
+			return Math.trunc(rawLevel * 100) / 100;
 		}
 	}
 	return maxLevel;
