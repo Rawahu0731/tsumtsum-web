@@ -34,6 +34,8 @@ export default defineConfig({
         ],
       },
       workbox: {
+        // tesseract-core.wasm.js in public/ is ~4.74MB and exceeds Workbox's default 2MB limit.
+        maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
         // Claim and activate the latest service worker immediately so new deployments take effect.
         clientsClaim: true,
         skipWaiting: true,
