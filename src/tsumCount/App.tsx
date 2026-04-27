@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { createWorker } from 'tesseract.js';
 import './App.css';
 import CompleteAnimation from './components/CompleteAnimation';
 import { data as sourceData } from './data';
+import { createLocalTesseractWorker, type TesseractWorker } from '../utils/tesseractWorker';
 
 const MONTHLY_NEW_NAMES = new Set([
     'マジカルステッキミニー＜変身＞',
@@ -114,7 +114,6 @@ const formatter = new Intl.NumberFormat('ja-JP');
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
-type TesseractWorker = Awaited<ReturnType<typeof createWorker>>;
 type CropImageResult = {
 	blob: Blob;
 	sourceWidth: number;
@@ -122,10 +121,6 @@ type CropImageResult = {
 	targetWidth: number;
 	targetHeight: number;
 };
-
-const TESSERACT_WORKER_PATH = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/worker.min.js';
-const TESSERACT_LANG_PATH = 'https://tessdata.projectnaptha.com/5';
-const TESSERACT_CORE_PATH = 'https://cdn.jsdelivr.net/npm/tesseract.js-core@5/tesseract-core.wasm.js';
 
 function getMaxLevel(needs: number[]): number {
 	for (let i = needs.length - 1; i >= 0; i -= 1) {
@@ -564,23 +559,12 @@ export default function TsumCountApp() {
 			pushLog('Worker: creating (Safari-safe paths)');
 			workerPromiseRef.current = (async () => {
 				try {
-					const worker = await createWorker({
-						workerPath: TESSERACT_WORKER_PATH,
-						langPath: TESSERACT_LANG_PATH,
-						corePath: TESSERACT_CORE_PATH,
-						logger: (m: { status?: string; progress?: number }) => {
-							if (!m?.status) return;
-							const progress = typeof m.progress === 'number' ? ` (${Math.round(m.progress * 100)}%)` : '';
-							pushLog(`Worker status: ${m.status}${progress}`);
-						},
+					const worker = await createLocalTesseractWorker((m: { status?: string; progress?: number }) => {
+						if (!m?.status) return;
+						const progress = typeof m.progress === 'number' ? ` (${Math.round(m.progress * 100)}%)` : '';
+						pushLog(`Worker status: ${m.status}${progress}`);
 					});
-					pushLog('Worker: created');
-					await worker.load();
-					pushLog('Worker: loaded');
-					await worker.loadLanguage('jpn');
-					pushLog('Worker: language loaded');
-					await worker.initialize('jpn');
-					pushLog('Worker: initialized');
+					pushLog('Worker: created and initialized');
 					workerRef.current = worker;
 					return worker;
 				} catch (error) {

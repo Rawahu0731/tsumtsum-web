@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import ConfirmModal from './ConfirmModal';
 import { loadData } from '../storage';
+import { createLocalTesseractWorker } from '../../utils/tesseractWorker';
 
 type Props = {
     onApply: (amount: number) => void;
@@ -102,40 +103,23 @@ export default function PasteCoin({ onApply }: Props) {
                 return URL.createObjectURL(blob);
             });
 
-            const tesseractMod: any = await import('tesseract.js');
-            const createWorkerFn = tesseractMod.createWorker || tesseractMod.default?.createWorker || tesseractMod;
-            if (typeof createWorkerFn !== 'function') {
-                setStatus('OCRライブラリの初期化に失敗しました');
-                setErrorMsg('tesseract.js の createWorker を見つけられませんでした。');
-                return;
-            }
-
-            // createWorker may return a worker or a Promise resolving to a worker
-            let worker: any = createWorkerFn({
-                logger: (m: any) => setStatus(`OCR: ${m.status} ${(m.progress ? Math.round(m.progress * 100) : '')}%`),
+            const worker = await createLocalTesseractWorker({
+                lang: 'eng',
+                logger: (m) =>
+                    setStatus(`OCR: ${m.status ?? ''} ${(m.progress ? Math.round(m.progress * 100) : '')}%`),
+                parameters: {
+                    tessedit_char_whitelist: '0123456789',
+                },
             });
-            if (worker && typeof worker.then === 'function') {
-                worker = await worker;
-            }
 
             let text = '';
-            if (worker && typeof worker.load === 'function') {
-                await worker.load();
-                await worker.loadLanguage('eng');
-                await worker.initialize('eng');
-                const { data } = await worker.recognize(blob);
-                text = data?.text ?? '';
-                if (typeof worker.terminate === 'function') await worker.terminate();
-            } else if (worker && typeof worker.recognize === 'function') {
-                // some builds expose a simple API
+            try {
                 const res = await worker.recognize(blob);
                 text = res?.data?.text ?? res?.text ?? '';
-                if (typeof worker.terminate === 'function') await worker.terminate();
-            } else {
-                setStatus('OCRの実行に失敗しました');
-                setErrorMsg('worker が適切な OCR インターフェースを提供していません。');
-                return;
+            } finally {
+                await Promise.resolve(worker.terminate());
             }
+
             const m = text.match(/[0-9,]+/);
             if (!m) {
                 setStatus('数字を検出できませんでした');
