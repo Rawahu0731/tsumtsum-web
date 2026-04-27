@@ -352,6 +352,10 @@ function normalizeText(text: string) {
 	return text.replace(/\./g, '').replace(/ /g, '').replace(/\s+/g, '').trim();
 }
 
+function isOcrSallyText(normalizedText: string) {
+	return normalizedText === 'サリー';
+}
+
 function levenshteinDistance(a: string, b: string) {
 	if (a === b) return 0;
 	const aLen = a.length;
@@ -384,6 +388,11 @@ function resolveOcrMatch(text: string, rows: EnrichedRow[]): OcrMatch {
 	const normalizedText = normalizeText(text);
 	if (!normalizedText) {
 		return { normalizedText, matched: false };
+	}
+
+	// OCR結果が"サリー"なら検索語をサリー固定にし、距離計算は行わない。
+	if (isOcrSallyText(normalizedText)) {
+		return { normalizedText: 'サリー', matched: false };
 	}
 
 	let bestRow: EnrichedRow | undefined;
