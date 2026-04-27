@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createWorker } from 'tesseract.js';
 import './App.css';
+import CompleteAnimation from './components/CompleteAnimation';
 import { data as sourceData } from './data';
 
 const MONTHLY_NEW_NAMES = new Set([
@@ -85,6 +86,7 @@ const STORAGE_KEY = 'tsum-count-state-v1';
 const WALLET_STORAGE_KEY = 'tsumtsum-wallet-data';
 const OCR_CROP_STORAGE_KEY = 'tsum-ocr-crop-v1';
 const PREMIUM_GOAL_DATE_STORAGE_KEY = 'tsum-premium-goal-date-v1';
+const PREMIUM_COMPLETE_ANIMATION_STORAGE_KEY = 'tsum-premium-complete-animation-v1';
 const MAX_OCR_WIDTH = 1000;
 const DEFAULT_CROP: CropSetting = {
 	top: 0.1,
@@ -277,6 +279,27 @@ function loadPremiumGoalDate(): string {
 	}
 }
 
+function loadPremiumCompleteAnimationFlag(): boolean {
+	try {
+		return localStorage.getItem(PREMIUM_COMPLETE_ANIMATION_STORAGE_KEY) === '1';
+	} catch (err) {
+		console.error('Failed to load premium complete animation flag', err);
+		return false;
+	}
+}
+
+function persistPremiumCompleteAnimationFlag(value: boolean) {
+	try {
+		if (value) {
+			localStorage.setItem(PREMIUM_COMPLETE_ANIMATION_STORAGE_KEY, '1');
+			return;
+		}
+		localStorage.removeItem(PREMIUM_COMPLETE_ANIMATION_STORAGE_KEY);
+	} catch (err) {
+		console.error('Failed to save premium complete animation flag', err);
+	}
+}
+
 function loadWalletCurrentCoin(): number {
 	try {
 		const raw = localStorage.getItem(WALLET_STORAGE_KEY);
@@ -459,6 +482,8 @@ export default function TsumCountApp() {
 	const scrollTopRef = useRef<HTMLDivElement>(null);
 	const gachaInputRef = useRef<HTMLInputElement>(null);
 	const ocrSectionRef = useRef<HTMLHeadingElement>(null);
+	const premiumCompleteRef = useRef<HTMLDivElement>(null);
+	const premiumCelebrateTimeoutRef = useRef<number | null>(null);
 	const workerRef = useRef<TesseractWorker | null>(null);
 	const workerPromiseRef = useRef<Promise<TesseractWorker> | null>(null);
 	const [tableWidth, setTableWidth] = useState(1200);
@@ -471,6 +496,10 @@ export default function TsumCountApp() {
 	const [ocrLogOpen, setOcrLogOpen] = useState(false);
 	const [premiumGoalDate, setPremiumGoalDate] = useState<string>(() => loadPremiumGoalDate());
 	const [walletCurrentCoin, setWalletCurrentCoin] = useState<number>(() => loadWalletCurrentCoin());
+	const [hasPlayedPremiumCompleteAnimation, setHasPlayedPremiumCompleteAnimation] = useState<boolean>(
+		() => loadPremiumCompleteAnimationFlag(),
+	);
+	const [showPremiumCompleteCelebration, setShowPremiumCompleteCelebration] = useState(false);
 	const typeOptions = useMemo(() => Array.from(new Set(baseRows.map((r) => r.type))).sort((a, b) => a - b), [baseRows]);
 
 	const pushLog = useCallback((message: string) => {
@@ -498,6 +527,10 @@ export default function TsumCountApp() {
 	}, [premiumGoalDate]);
 
 	useEffect(() => {
+		persistPremiumCompleteAnimationFlag(hasPlayedPremiumCompleteAnimation);
+	}, [hasPlayedPremiumCompleteAnimation]);
+
+	useEffect(() => {
 		const refreshWalletCoin = () => {
 			setWalletCurrentCoin(loadWalletCurrentCoin());
 		};
@@ -512,6 +545,10 @@ export default function TsumCountApp() {
 
 	useEffect(() => {
 		return () => {
+			if (premiumCelebrateTimeoutRef.current !== null) {
+				window.clearTimeout(premiumCelebrateTimeoutRef.current);
+				premiumCelebrateTimeoutRef.current = null;
+			}
 			workerPromiseRef.current = null;
 			const worker = workerRef.current;
 			workerRef.current = null;
@@ -660,6 +697,8 @@ export default function TsumCountApp() {
 		() => Math.max(0, premiumAggregate.coinCost - walletCurrentCoin),
 		[premiumAggregate.coinCost, walletCurrentCoin],
 	);
+	const isPremiumSoldOut = premiumCoinsToEarn === 0;
+	const wasPremiumSoldOutRef = useRef(isPremiumSoldOut);
 	const premiumGoalPlan = useMemo<PremiumGoalPlan | null>(() => {
 		const targetDate = parseInputDate(premiumGoalDate);
 		if (!targetDate) return null;
@@ -691,6 +730,45 @@ export default function TsumCountApp() {
 			isPast: false,
 		};
 	}, [premiumCoinsToEarn, premiumGoalDate]);
+
+	useEffect(() => {
+		if (isPremiumSoldOut) return;
+
+		if (premiumCelebrateTimeoutRef.current !== null) {
+			window.clearTimeout(premiumCelebrateTimeoutRef.current);
+			premiumCelebrateTimeoutRef.current = null;
+		}
+
+		if (showPremiumCompleteCelebration) {
+			setShowPremiumCompleteCelebration(false);
+		}
+
+		if (hasPlayedPremiumCompleteAnimation) {
+			setHasPlayedPremiumCompleteAnimation(false);
+		}
+	}, [hasPlayedPremiumCompleteAnimation, isPremiumSoldOut, showPremiumCompleteCelebration]);
+
+	useEffect(() => {
+		const wasPremiumSoldOut = wasPremiumSoldOutRef.current;
+		if (!wasPremiumSoldOut && isPremiumSoldOut && !hasPlayedPremiumCompleteAnimation) {
+			setShowPremiumCompleteCelebration(true);
+			setHasPlayedPremiumCompleteAnimation(true);
+
+			requestAnimationFrame(() => {
+				premiumCompleteRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+			});
+
+			if (premiumCelebrateTimeoutRef.current !== null) {
+				window.clearTimeout(premiumCelebrateTimeoutRef.current);
+			}
+			premiumCelebrateTimeoutRef.current = window.setTimeout(() => {
+				setShowPremiumCompleteCelebration(false);
+				premiumCelebrateTimeoutRef.current = null;
+			}, 2800);
+		}
+
+		wasPremiumSoldOutRef.current = isPremiumSoldOut;
+	}, [hasPlayedPremiumCompleteAnimation, isPremiumSoldOut]);
 
 	useEffect(() => {
 		const updateWidth = () => {
@@ -1564,46 +1642,54 @@ export default function TsumCountApp() {
 			<section className="summary">
 				<h2>プレミアムボックス完売まで</h2>
 				<p className="summary-note">常駐ツムと今月の新ツムを全てスキルマにする必要があります。</p>
-				<p className="summary-note">
-					計算式: （必要コイン {formatter.format(premiumAggregate.coinCost)} - wallet現在コイン {formatter.format(walletCurrentCoin)}）÷ 残り日数
-				</p>
-				<div className="premium-goal-controls">
-					<label className="premium-goal-field">
-						<span>プレボ完売目標日</span>
-						<input
-							type="date"
-							min={toDateInputValue(new Date())}
-							value={premiumGoalDate}
-							onChange={(e) => setPremiumGoalDate(e.target.value)}
-						/>
-					</label>
-					<button
-						type="button"
-						className="ghost-btn"
-						onClick={() => setPremiumGoalDate('')}
-						disabled={!premiumGoalDate}
-					>
-						目標日クリア
-					</button>
-				</div>
-				{!premiumGoalDate && <p className="summary-note">目標日を設定すると、1日/1週あたり必要コインを表示します。</p>}
-				{premiumGoalPlan?.isPast && <p className="summary-note premium-goal-alert">目標日が過去です。今日以降の日付を指定してください。</p>}
-				{premiumGoalPlan && !premiumGoalPlan.isPast && (
-					<div className="premium-goal-grid">
-						<div className="premium-goal-card">
-							<div className="premium-goal-title">残り期間</div>
-							<div className="premium-goal-value">
-								{premiumGoalPlan.daysRemaining} 日（約 {premiumGoalPlan.weeksRemaining.toFixed(2)} 週）
+				{!isPremiumSoldOut ? (
+					<>
+						<p className="summary-note">
+							計算式: （必要コイン {formatter.format(premiumAggregate.coinCost)} - wallet現在コイン {formatter.format(walletCurrentCoin)}）÷ 残り日数
+						</p>
+						<div className="premium-goal-controls">
+							<label className="premium-goal-field">
+								<span>プレボ完売目標日</span>
+								<input
+									type="date"
+									min={toDateInputValue(new Date())}
+									value={premiumGoalDate}
+									onChange={(e) => setPremiumGoalDate(e.target.value)}
+								/>
+							</label>
+							<button
+								type="button"
+								className="ghost-btn"
+								onClick={() => setPremiumGoalDate('')}
+								disabled={!premiumGoalDate}
+							>
+								目標日クリア
+							</button>
+						</div>
+						{!premiumGoalDate && <p className="summary-note">目標日を設定すると、1日/1週あたり必要コインを表示します。</p>}
+						{premiumGoalPlan?.isPast && <p className="summary-note premium-goal-alert">目標日が過去です。今日以降の日付を指定してください。</p>}
+						{premiumGoalPlan && !premiumGoalPlan.isPast && (
+							<div className="premium-goal-grid">
+								<div className="premium-goal-card">
+									<div className="premium-goal-title">残り期間</div>
+									<div className="premium-goal-value">
+										{premiumGoalPlan.daysRemaining} 日（約 {premiumGoalPlan.weeksRemaining.toFixed(2)} 週）
+									</div>
+								</div>
+								<div className="premium-goal-card">
+									<div className="premium-goal-title">1日あたり必要コイン</div>
+									<div className="premium-goal-value">{formatter.format(premiumGoalPlan.dailyCoinRequired)} coin</div>
+								</div>
+								<div className="premium-goal-card">
+									<div className="premium-goal-title">1週あたり必要コイン</div>
+									<div className="premium-goal-value">{formatter.format(premiumGoalPlan.weeklyCoinRequired)} coin</div>
+								</div>
 							</div>
-						</div>
-						<div className="premium-goal-card">
-							<div className="premium-goal-title">1日あたり必要コイン</div>
-							<div className="premium-goal-value">{formatter.format(premiumGoalPlan.dailyCoinRequired)} coin</div>
-						</div>
-						<div className="premium-goal-card">
-							<div className="premium-goal-title">1週あたり必要コイン</div>
-							<div className="premium-goal-value">{formatter.format(premiumGoalPlan.weeklyCoinRequired)} coin</div>
-						</div>
+						)}
+					</>
+				) : (
+					<div className="premium-complete-slot" ref={premiumCompleteRef}>
+						<CompleteAnimation isFirstCelebration={showPremiumCompleteCelebration} />
 					</div>
 				)}
 				<div className="agg-list">
