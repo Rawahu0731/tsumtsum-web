@@ -295,19 +295,23 @@ function persistPremiumCompleteAnimationFlag(value: boolean) {
 	}
 }
 
-function loadWalletCurrentCoin(): number {
+function loadWalletPreviousDayCoin(): number {
 	try {
 		const raw = localStorage.getItem(WALLET_STORAGE_KEY);
 		if (!raw) return 0;
 
 		const parsed = JSON.parse(raw) as {
 			initialCoinAmount?: unknown;
-			records?: Array<{ coinAmount?: unknown; timestamp?: unknown }>;
+			records?: Array<{ date?: unknown; coinAmount?: unknown; timestamp?: unknown }>;
 		};
 
 		const records = Array.isArray(parsed.records) ? parsed.records : [];
-		if (records.length > 0) {
-			const latest = records.reduce((acc, record) => {
+		const today = toDateInputValue(new Date());
+		const previousDayRecords = records.filter(
+			(record) => typeof record.date === 'string' && record.date < today,
+		);
+		if (previousDayRecords.length > 0) {
+			const latest = previousDayRecords.reduce((acc, record) => {
 				const currentTs = typeof record.timestamp === 'number' && Number.isFinite(record.timestamp)
 					? record.timestamp
 					: Number.NEGATIVE_INFINITY;
@@ -315,7 +319,7 @@ function loadWalletCurrentCoin(): number {
 					? acc.timestamp
 					: Number.NEGATIVE_INFINITY;
 				return currentTs >= accTs ? record : acc;
-			}, records[0]);
+			}, previousDayRecords[0]);
 
 			const latestCoin = Number(latest.coinAmount);
 			if (Number.isFinite(latestCoin)) {
@@ -330,7 +334,7 @@ function loadWalletCurrentCoin(): number {
 
 		return 0;
 	} catch (err) {
-		console.error('Failed to load wallet current coin', err);
+		console.error('Failed to load wallet previous day coin', err);
 		return 0;
 	}
 }
@@ -499,7 +503,7 @@ export default function TsumCountApp() {
 	const [ocrLogs, setOcrLogs] = useState<string[]>([]);
 	const [ocrLogOpen, setOcrLogOpen] = useState(false);
 	const [premiumGoalDate, setPremiumGoalDate] = useState<string>(() => loadPremiumGoalDate());
-	const [walletCurrentCoin, setWalletCurrentCoin] = useState<number>(() => loadWalletCurrentCoin());
+	const [walletPreviousDayCoin, setWalletPreviousDayCoin] = useState<number>(() => loadWalletPreviousDayCoin());
 	const [hasPlayedPremiumCompleteAnimation, setHasPlayedPremiumCompleteAnimation] = useState<boolean>(
 		() => loadPremiumCompleteAnimationFlag(),
 	);
@@ -536,7 +540,7 @@ export default function TsumCountApp() {
 
 	useEffect(() => {
 		const refreshWalletCoin = () => {
-			setWalletCurrentCoin(loadWalletCurrentCoin());
+			setWalletPreviousDayCoin(loadWalletPreviousDayCoin());
 		};
 
 		window.addEventListener('focus', refreshWalletCoin);
@@ -687,8 +691,8 @@ export default function TsumCountApp() {
 	);
 	const premiumAggregate = useMemo(() => aggregate(premiumBoxRows), [premiumBoxRows]);
 	const premiumCoinsToEarn = useMemo(
-		() => Math.max(0, premiumAggregate.coinCost - walletCurrentCoin),
-		[premiumAggregate.coinCost, walletCurrentCoin],
+		() => Math.max(0, premiumAggregate.coinCost - walletPreviousDayCoin),
+		[premiumAggregate.coinCost, walletPreviousDayCoin],
 	);
 	const isPremiumSoldOut = premiumCoinsToEarn === 0;
 	const wasPremiumSoldOutRef = useRef(isPremiumSoldOut);
@@ -1638,7 +1642,7 @@ export default function TsumCountApp() {
 				{!isPremiumSoldOut ? (
 					<>
 						<p className="summary-note">
-							計算式: （必要コイン {formatter.format(premiumAggregate.coinCost)} - wallet現在コイン {formatter.format(walletCurrentCoin)}）÷ 残り日数
+							計算式: （必要コイン {formatter.format(premiumAggregate.coinCost)} - 昨日終了時コイン {formatter.format(walletPreviousDayCoin)}）÷ 残り日数
 						</p>
 						<div className="premium-goal-controls">
 							<label className="premium-goal-field">

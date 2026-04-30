@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import './index.css'
 import './App.css'
-import Usage from './pages/Usage'
 
 function CpmMain() {
   const [time, setTime] = useState('00:00');
@@ -19,7 +18,6 @@ function CpmMain() {
   const [entries, setEntries] = useState<Array<{ character: string; skill: number; cpm: number; ts: number; time?: string; coins?: number; terminal?: string; items: { score: boolean; coin: boolean; exp: boolean; timeItem: boolean; bomb: boolean; fivetofour: boolean } }>>([]);
   const [importError, setImportError] = useState<string | null>(null);
   const [isOpening, setIsOpening] = useState(false);
-  const [showUsage, setShowUsage] = useState(false);
 
   const handleCalcClick = () => {
     const timeParts = time.split(':');
@@ -252,21 +250,10 @@ function CpmMain() {
       </header>
 
       <nav className="nav-bar">
-        <button onClick={() => setShowUsage(true)}>Usage</button>
         <button onClick={handleExportJSON}>Export Data</button>
         <button onClick={handleImportClick}>Import JSON</button>
         <input ref={fileInputRef} type="file" accept="application/json" style={{ display: 'none' }} onChange={handleFileChange} />
       </nav>
-
-      {showUsage && (
-        <div className="card">
-          <div className="card-header">
-            <h2>How to use</h2>
-            <button className="btn btn-ghost" onClick={() => setShowUsage(false)}>Close</button>
-          </div>
-          <Usage onBack={() => setShowUsage(false)} />
-        </div>
-      )}
 
       {importError && (
         <div style={{

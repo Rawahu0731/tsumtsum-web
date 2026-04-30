@@ -44,7 +44,13 @@ const FEATURES = [
     description:
       'スキル進行度と必要コイン/メダルを一括管理。検索・ソート・CSV入出力で進捗を整理できます。',
     to: '/tsum-count',
-    icon: <SkillIcon />,
+    icon: <SkillIcon />, 
+  },
+  {
+    title: 'How to Use',
+    description: 'このアプリの使い方・各機能の説明はこちら',
+    to: '/usage',
+    icon: <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden><circle cx="12" cy="12" r="10" stroke="#2563eb" strokeWidth="1.5"/><path d="M12 8v2m0 4h.01" stroke="#2563eb" strokeWidth="1.5" strokeLinecap="round"/></svg>,
   },
 ];
 
