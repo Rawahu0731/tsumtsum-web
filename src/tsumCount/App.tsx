@@ -5,11 +5,7 @@ import { data as sourceData } from './data';
 import { createLocalTesseractWorker, type TesseractWorker } from '../utils/tesseractWorker';
 
 const MONTHLY_NEW_NAMES = new Set([
-    'マジカルステッキミニー＜変身＞',
-    'マジカルステッキデイジー＜変身＞',
-    'マジカルステッキクラリス＜変身＞',
-    'ミステリアスナイトミッキー',
-	'メイベル＋'
+	''
 ]);
 
 type TsumRow = {
