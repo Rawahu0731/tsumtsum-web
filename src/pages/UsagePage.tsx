@@ -35,6 +35,51 @@ const pageSections = [
       'Export Data と Import JSON は、まとめてバックアップしたいときに便利です。',
       '時間は mm:ss 形式で入れます。アイテムの有無で効率計算が変わります。',
     ],
+    ranking: {
+      title: 'ランキング機能',
+      modes: [
+        {
+          name: '平均ランキング',
+          description: '全試行の平均コイン効率で順位をつけます。同じツムやアイテム組み合わせでの「最大火力」「理論値」を見るのに向いています。',
+          what: [
+            '全プレイ回数の平均 CPM で降順ソート',
+            '試行回数が少なくても表示される',
+            '平均値だけでは安定性は判断できない',
+          ],
+        },
+        {
+          name: '評価値ランキング',
+          description: '平均性能と安定性の両方を考慮した評価値で順位をつけます。実際の周回効率や安定した強さを見るのに向いています。',
+          what: [
+            '変動係数（CV）を使って安定性を評価',
+            '評価値 = 平均 × (1 - CV × 0.5) で計算',
+            '試行回数 10 回以上のみ表示される',
+            'ブレが小さく安定したツムが高評価になる',
+          ],
+        },
+      ],
+      understanding: {
+        title: '平均ランキングと評価値ランキングの違い',
+        example: [
+          '例 1: CPM 10,000 で安定（σ = 200）',
+          '  → 評価値 = 10,000 × (1 - 0.02 × 0.5) = 9,900',
+          '',
+          '例 2: CPM 10,000 だが不安定（σ = 1,000）',
+          '  → 評価値 = 10,000 × (1 - 0.10 × 0.5) = 9,500',
+          '',
+          'ブレが大きいほど評価が下がります。',
+        ].join('\n'),
+        interpretations: [
+          '平均ランキングが上にいるツム = 爆発力が高い、上振れ時の最大火力が大きい',
+          '評価値ランキングが上にいるツム = 日常的に周回するなら安定して稼げる',
+        ],
+      },
+      tips: [
+        '最初は「平均ランキング」で最高火力を確認し、実際に使うなら「評価値ランキング」で安定性も見ると判断がしやすいです。',
+        '表示される数値（σ と CV）は安定性の指標です。値が小さいほど安定しています。',
+        '評価値ランキングで試行回数が 10 回未満のツムは表示されませんが、平均ランキングには表示されます。',
+      ],
+    },
     calculation: {
       costs: {
         score: 500,
@@ -239,6 +284,61 @@ export default function UsagePage() {
 ※ minutes はプレイ時間を分単位で表したものです。`}
                   </pre>
                   <div style={{ color: '#6b7280', marginTop: 8 }}>{section.calculation.note}</div>
+                </div>
+              )}
+
+              {section.ranking && (
+                <div style={subBlock}>
+                  <h4 style={subTitle}>{section.ranking.title}</h4>
+                  
+                  {section.ranking.modes && (
+                    <div style={{ marginBottom: 16 }}>
+                      {section.ranking.modes.map((mode) => (
+                        <div key={mode.name} style={{ marginBottom: 12, paddingLeft: 12, borderLeft: '3px solid #2563eb' }}>
+                          <div style={{ fontWeight: 600, marginBottom: 4 }}>{mode.name}</div>
+                          <p style={{ margin: '0 0 8px 0', color: '#4b5563', fontSize: '0.938rem' }}>
+                            {mode.description}
+                          </p>
+                          <ul style={{ ...bulletList, marginBottom: 0 }}>
+                            {mode.what.map((item) => (
+                              <li key={item} style={listItem}>
+                                {item}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {section.ranking.understanding && (
+                    <div style={{ marginBottom: 16, padding: 12, backgroundColor: '#f3f4f6', borderRadius: 8 }}>
+                      <div style={{ fontWeight: 600, marginBottom: 8 }}>{section.ranking.understanding.title}</div>
+                      <pre style={{ ...preStyle, margin: 0, marginBottom: 8 }}>
+                        {section.ranking.understanding.example}
+                      </pre>
+                      <ul style={{ ...bulletList, marginBottom: 0 }}>
+                        {section.ranking.understanding.interpretations.map((item) => (
+                          <li key={item} style={listItem}>
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {section.ranking.tips && (
+                    <div>
+                      <h5 style={{ ...subTitle, fontSize: '0.875rem', marginBottom: 8 }}>ランキング見方のコツ</h5>
+                      <ul style={bulletList}>
+                        {section.ranking.tips.map((item) => (
+                          <li key={item} style={listItem}>
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
               )}
 

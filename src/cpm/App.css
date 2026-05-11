@@ -520,3 +520,119 @@ input[type="number"]:focus {
     padding: 0.75rem 0.5rem;
   }
 }
+
+/* Ranking Switch Buttons */
+.ranking-switch {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.ranking-switch-btn {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--c-border);
+  background: var(--c-bg-body);
+  color: var(--c-text-secondary);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ranking-switch-btn:hover {
+  border-color: var(--c-text-tertiary);
+  background: var(--c-bg-surface);
+}
+
+.ranking-switch-btn.active {
+  background: var(--c-accent);
+  color: var(--c-text-on-accent);
+  border-color: var(--c-accent);
+}
+
+/* Low Confidence Indicator */
+.low-confidence {
+  opacity: 0.6;
+  font-style: italic;
+}
+
+/* Tooltip Modal */
+.tooltip-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.tooltip-modal {
+  background: var(--c-bg-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-md);
+  padding: 2rem;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.tooltip-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.tooltip-header h3 {
+  font-size: 1.125rem;
+  color: var(--c-text-primary);
+  margin: 0;
+}
+
+.tooltip-close {
+  background: none;
+  border: none;
+  color: var(--c-text-secondary);
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease;
+}
+
+.tooltip-close:hover {
+  color: var(--c-text-primary);
+}
+
+.tooltip-content {
+  font-size: 0.938rem;
+  color: var(--c-text-secondary);
+  line-height: 1.6;
+}
+
+/* Info Header */
+.info-header {
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.2s ease;
+}
+
+.info-header:hover {
+  background-color: var(--c-bg-body);
+}
+
+.info-icon {
+  margin-left: 0.25rem;
+  opacity: 0.6;
+  font-size: 0.85em;
+}

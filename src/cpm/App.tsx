@@ -18,6 +18,8 @@ function CpmMain() {
   const [entries, setEntries] = useState<Array<{ character: string; skill: number; cpm: number; ts: number; time?: string; coins?: number; terminal?: string; items: { score: boolean; coin: boolean; exp: boolean; timeItem: boolean; bomb: boolean; fivetofour: boolean } }>>([]);
   const [importError, setImportError] = useState<string | null>(null);
   const [isOpening, setIsOpening] = useState(false);
+  const [rankingMode, setRankingMode] = useState<'average' | 'rating'>('average');
+  const [tooltipInfo, setTooltipInfo] = useState<{ title: string; description: string } | null>(null);
 
   const handleCalcClick = () => {
     const timeParts = time.split(':');
@@ -92,7 +94,7 @@ function CpmMain() {
   }
 
   const aggregated = (() => {
-    const map = new Map<string, { character: string; skill: number; items: any; sum: number; count: number; sumTimeSec: number; sumCoins: number }>();
+    const map = new Map<string, { character: string; skill: number; items: any; sum: number; sumSq: number; count: number; sumTimeSec: number; sumCoins: number }>();
     entries.forEach(e => {
       const key = `${e.character}::${e.skill}::${itemsKey(e.items)}`;
       const cur = map.get(key);
@@ -103,23 +105,48 @@ function CpmMain() {
       const coinsVal = Number(e.coins || 0);
       if (cur) {
         cur.sum += e.cpm;
+        cur.sumSq += e.cpm * e.cpm;
         cur.count += 1;
         cur.sumTimeSec += totalSec;
         cur.sumCoins += coinsVal;
       } else {
-        map.set(key, { character: e.character, skill: e.skill, items: e.items, sum: e.cpm, count: 1, sumTimeSec: totalSec, sumCoins: coinsVal });
+        map.set(key, { character: e.character, skill: e.skill, items: e.items, sum: e.cpm, sumSq: e.cpm * e.cpm, count: 1, sumTimeSec: totalSec, sumCoins: coinsVal });
       }
     });
-    const arr = Array.from(map.values()).map(v => ({
-      character: v.character,
-      skill: v.skill,
-      items: v.items,
-      avg: v.sum / v.count,
-      count: v.count,
-      avgTimeSec: Math.round(v.sumTimeSec / v.count),
-      avgCoins: Math.round(v.sumCoins / v.count),
-    }));
-    arr.sort((a, b) => b.avg - a.avg);
+    const arr = Array.from(map.values()).map(v => {
+      const avg = v.sum / v.count;
+      const variance = (v.sumSq / v.count) - (avg * avg);
+      const stdDev = Math.sqrt(Math.max(variance, 0));
+      const cv = avg === 0 ? 0 : stdDev / avg;
+      const rating = avg * (1 - cv * 0.5);
+      return {
+        character: v.character,
+        skill: v.skill,
+        items: v.items,
+        avg,
+        stdDev,
+        cv,
+        rating,
+        count: v.count,
+        avgTimeSec: Math.round(v.sumTimeSec / v.count),
+        avgCoins: Math.round(v.sumCoins / v.count),
+      };
+    });
+    
+    // ソート処理（rankingMode に応じて変更）
+    arr.sort((a, b) => {
+      if (rankingMode === 'average') {
+        return b.avg - a.avg;
+      }
+      // 評価値ランキングは count >= 10 のみ対象
+      const aValid = a.count >= 10;
+      const bValid = b.count >= 10;
+      if (aValid !== bValid) {
+        return aValid ? -1 : 1;
+      }
+      return b.rating - a.rating;
+    });
+    
     return arr;
   })();
 
@@ -405,6 +432,35 @@ function CpmMain() {
           <span className="data-count">Total: {entries.length}</span>
         </div>
 
+        <div className="ranking-switch">
+          <button
+            className={`ranking-switch-btn ${rankingMode === 'average' ? 'active' : ''}`}
+            onClick={() => setRankingMode('average')}
+          >
+            平均ランキング
+          </button>
+          <button
+            className={`ranking-switch-btn ${rankingMode === 'rating' ? 'active' : ''}`}
+            onClick={() => setRankingMode('rating')}
+          >
+            評価値ランキング
+          </button>
+        </div>
+
+        {tooltipInfo && (
+          <div className="tooltip-overlay" onClick={() => setTooltipInfo(null)}>
+            <div className="tooltip-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="tooltip-header">
+                <h3>{tooltipInfo.title}</h3>
+                <button className="tooltip-close" onClick={() => setTooltipInfo(null)}>✕</button>
+              </div>
+              <div className="tooltip-content">
+                {tooltipInfo.description}
+              </div>
+            </div>
+          </div>
+        )}
+
         {entries.length === 0 ? (
           <div className="text-secondary text-center py-4">No Data Recorded</div>
         ) : (
@@ -418,12 +474,44 @@ function CpmMain() {
                   <th className="text-left">Items</th>
                   <th className="text-right">Time</th>
                   <th className="text-right">Coins</th>
-                  <th className="text-right">Coins/min</th>
-                  <th className="text-right">Count</th>
+                  <th className="text-right info-header" onClick={() => setTooltipInfo({
+                    title: rankingMode === 'average' ? '平均 CPM' : '評価値 CPM',
+                    description: rankingMode === 'average' 
+                      ? '全試行の平均コイン効率です。'
+                      : '平均CPMに安定性を考慮した評価値です。計算式: 評価値 = 平均 × (1 - CV × 0.5)。CVが小さく安定したツムを高く評価します。評価値ランキングは試行回数10回以上のデータのみ表示されます。'
+                  })}>
+                    {rankingMode === 'average' ? '平均' : '評価値'} CPM <span className="info-icon">ℹ️</span>
+                  </th>
+                  <th className="text-right info-header" onClick={() => setTooltipInfo({
+                    title: '標準偏差 (σ)',
+                    description: 'ツムのプレイ結果のばらつきの大きさを示します。値が小さいほど安定していることを意味します。'
+                  })}>
+                    σ <span className="info-icon">ℹ️</span>
+                  </th>
+                  <th className="text-right info-header" onClick={() => setTooltipInfo({
+                    title: '変動係数 (CV)',
+                    description: '平均に対するブレ率を示します。CV = σ / 平均。値が小さいほど安定していることを意味します。%で表示されます。'
+                  })}>
+                    CV <span className="info-icon">ℹ️</span>
+                  </th>
+                  <th className="text-right info-header" onClick={() => setTooltipInfo({
+                    title: '試行回数',
+                    description: 'そのツム・スキルレベル・アイテム組み合わせでプレイした回数です。評価値ランキングは10回以上のデータのみ表示されます。'
+                  })}>
+                    Count <span className="info-icon">ℹ️</span>
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                {aggregated.map((r, i) => (
+                {aggregated
+                  .filter(r => {
+                    // 評価値ランキングは count >= 10 のみ表示
+                    if (rankingMode === 'rating') {
+                      return r.count >= 10;
+                    }
+                    return true;
+                  })
+                  .map((r, i) => (
                   <tr key={`${r.character}-${r.skill}-${itemsKey(r.items)}`} onClick={() => { setCharacter(r.character); setSkill(r.skill); setScore(!!r.items.score); setCoin(!!r.items.coin); setExp(!!r.items.exp); setTimeItem(!!r.items.timeItem); setBomb(!!r.items.bomb); setFivetofour(!!r.items.fivetofour); }} style={{ cursor: 'pointer' }}>
                     <td className="text-left"><span className={`rank-number ${i < 3 ? 'top' : ''}`}>{i + 1}</span></td>
                     <td className="text-left">{r.character}</td>
@@ -437,8 +525,18 @@ function CpmMain() {
                     </td>
                     <td className="text-right text-mono">{`${Math.floor((r.avgTimeSec || 0) / 60)}:${String((r.avgTimeSec || 0) % 60).padStart(2, '0')}`}</td>
                     <td className="text-right text-mono">{Number(r.avgCoins || 0).toFixed(0)}</td>
-                    <td className="text-right text-mono">{r.avg.toFixed(0)}</td>
-                    <td className="text-right text-mono">{r.count}</td>
+                    <td className="text-right text-mono">
+                      <span className={r.count < 10 && rankingMode === 'rating' ? 'low-confidence' : ''}>
+                        {rankingMode === 'average' ? r.avg.toFixed(0) : r.rating.toFixed(0)}
+                      </span>
+                    </td>
+                    <td className="text-right text-mono">{r.stdDev.toFixed(0)}</td>
+                    <td className="text-right text-mono">{(r.cv * 100).toFixed(1)}%</td>
+                    <td className="text-right text-mono">
+                      <span className={r.count < 10 && rankingMode === 'rating' ? 'low-confidence' : ''}>
+                        {r.count < 10 ? `${r.count}*` : r.count}
+                      </span>
+                    </td>
                   </tr>
                 ))}
               </tbody>
