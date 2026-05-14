@@ -13,9 +13,11 @@ const touchHandler = (event: TouchEvent) => {
 };
 document.addEventListener('touchstart', touchHandler, { passive: false });
 
-registerSW({
-  immediate: true,
-});
+if (import.meta.env.PROD) {
+  registerSW({
+    immediate: true,
+  });
+}
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

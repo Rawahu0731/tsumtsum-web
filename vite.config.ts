@@ -10,7 +10,7 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico'],
       devOptions: {
-        enabled: true,
+        enabled: false,
       },
       manifest: {
         name: 'TSUM TSUM UTILITIES',
@@ -68,4 +68,10 @@ export default defineConfig({
       },
     }),
   ],
+  server: {
+    hmr: {
+      protocol: 'ws',
+      host: 'localhost',
+    },
+  },
 })
