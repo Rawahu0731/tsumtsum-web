@@ -488,6 +488,7 @@ export default function TsumCountApp() {
 	const ocrSectionRef = useRef<HTMLHeadingElement>(null);
 	const premiumCompleteRef = useRef<HTMLDivElement>(null);
 	const premiumCelebrateTimeoutRef = useRef<number | null>(null);
+	const gachaMessageTimeoutRef = useRef<number | null>(null);
 	const workerRef = useRef<TesseractWorker | null>(null);
 	const workerPromiseRef = useRef<Promise<TesseractWorker> | null>(null);
 	const [tableWidth, setTableWidth] = useState(1200);
@@ -504,6 +505,7 @@ export default function TsumCountApp() {
 		() => loadPremiumCompleteAnimationFlag(),
 	);
 	const [showPremiumCompleteCelebration, setShowPremiumCompleteCelebration] = useState(false);
+	const [gachaMessage, setGachaMessage] = useState('');
 	const typeOptions = useMemo(() => Array.from(new Set(baseRows.map((r) => r.type))).sort((a, b) => a - b), [baseRows]);
 
 	const pushLog = useCallback((message: string) => {
@@ -552,6 +554,10 @@ export default function TsumCountApp() {
 			if (premiumCelebrateTimeoutRef.current !== null) {
 				window.clearTimeout(premiumCelebrateTimeoutRef.current);
 				premiumCelebrateTimeoutRef.current = null;
+			}
+			if (gachaMessageTimeoutRef.current !== null) {
+				window.clearTimeout(gachaMessageTimeoutRef.current);
+				gachaMessageTimeoutRef.current = null;
 			}
 			workerPromiseRef.current = null;
 			const worker = workerRef.current;
@@ -809,6 +815,15 @@ export default function TsumCountApp() {
 
 	const handleGachaClick = (row: EnrichedRow) => {
 		setOwned(row.cookieId, row.owned + 1);
+		setGachaQuery('');
+		setGachaMessage(`${row.name} を追加しました`);
+		if (gachaMessageTimeoutRef.current) {
+			clearTimeout(gachaMessageTimeoutRef.current);
+		}
+		gachaMessageTimeoutRef.current = window.setTimeout(() => {
+			setGachaMessage('');
+			gachaMessageTimeoutRef.current = null;
+		}, 2000);
 		requestAnimationFrame(() => {
 			gachaInputRef.current?.focus();
 		});
@@ -1241,6 +1256,11 @@ export default function TsumCountApp() {
 						onChange={(e) => setGachaQuery(e.target.value)}
 					/>
 				</div>
+				{gachaMessage && (
+					<div className="gacha-message">
+						{gachaMessage}
+					</div>
+				)}
 				{gachaQuery.trim() && (
 					<div className="gacha-results">
 						{gachaResults.length === 0 && <div className="gacha-empty">該当するツムが見つかりません</div>}

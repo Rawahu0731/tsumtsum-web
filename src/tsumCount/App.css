@@ -200,6 +200,28 @@ select option {
   color: #475569;
 }
 
+.gacha-message {
+  padding: 10px 12px;
+  border: 1px solid #22c55e;
+  border-radius: 10px;
+  background: #f0fdf4;
+  color: #15803d;
+  font-weight: 600;
+  text-align: center;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .toolbar-meta {
   display: flex;
   align-items: center;
