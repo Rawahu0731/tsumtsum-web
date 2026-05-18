@@ -7,6 +7,7 @@ function CpmMain() {
   const [coins, setCoins] = useState(0);
   const [terminal, setTerminal] = useState('');
   const [result, setResult] = useState<number | null>(null);
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [score, setScore] = useState(false);
   const [coin, setCoin] = useState(true);
   const [exp, setExp] = useState(false);
@@ -20,6 +21,7 @@ function CpmMain() {
   const [isOpening, setIsOpening] = useState(false);
   const [rankingMode, setRankingMode] = useState<'average' | 'rating'>('average');
   const [tooltipInfo, setTooltipInfo] = useState<{ title: string; description: string } | null>(null);
+  const saveMessageTimerRef = useRef<number | null>(null);
 
   const handleCalcClick = () => {
     const timeParts = time.split(':');
@@ -67,6 +69,14 @@ function CpmMain() {
     } catch (e) {
       console.error('failed to load entries', e);
     }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (saveMessageTimerRef.current !== null) {
+        window.clearTimeout(saveMessageTimerRef.current);
+      }
+    };
   }, []);
   function itemsKey(it: { score: boolean; coin: boolean; exp: boolean; timeItem: boolean; bomb: boolean; fivetofour: boolean }) {
     return `S:${it.score ? 1 : 0}|C:${it.coin ? 1 : 0}|E:${it.exp ? 1 : 0}|T:${it.timeItem ? 1 : 0}|B:${it.bomb ? 1 : 0}|F:${it.fivetofour ? 1 : 0}`;
@@ -195,6 +205,15 @@ function CpmMain() {
     const next = [entry, ...entries];
     setEntries(next);
     saveEntriesToStorage(next);
+
+    if (saveMessageTimerRef.current !== null) {
+      window.clearTimeout(saveMessageTimerRef.current);
+    }
+    setSaveMessage('保存しました');
+    saveMessageTimerRef.current = window.setTimeout(() => {
+      setSaveMessage(null);
+      saveMessageTimerRef.current = null;
+    }, 2000);
   }
 
   const handleExportJSON = () => {
@@ -409,7 +428,10 @@ function CpmMain() {
         <div className="card">
           <div className="card-header">
             <h2>Result</h2>
-            <button className="btn btn-outline" onClick={handleSave}>Save Record</button>
+            <div className="save-actions">
+              {saveMessage && <span className="save-message">{saveMessage}</span>}
+              <button className="btn btn-outline" onClick={handleSave}>Save Record</button>
+            </div>
           </div>
           <div className="result-stats">
             <div className="result-stat">
