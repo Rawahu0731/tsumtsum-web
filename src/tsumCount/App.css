@@ -2,8 +2,8 @@
   max-width: 1280px;
   margin: 0 auto;
   padding: 16px;
-  color: #0f172a;
-  background: #f8fafc;
+  color: var(--text);
+  background: var(--bg-0);
   font-family: "Noto Sans JP", "Segoe UI", system-ui, -apple-system, sans-serif;
 }
 
@@ -13,10 +13,10 @@
   justify-content: space-between;
   gap: 12px;
   padding: 12px 16px;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  background: #fff;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.04);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-xs);
 }
 
 .tsum-header h1 {
@@ -28,7 +28,7 @@
   margin: 0;
   font-size: 12px;
   letter-spacing: 0.08em;
-  color: #64748b;
+  color: var(--text-muted);
 }
 
 .header-actions {
@@ -52,33 +52,33 @@ input, select {
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
-  background-color: #fff;
-  color: #0f172a;
+  background-color: var(--surface);
+  color: var(--text);
 }
 
 /* option も明示してダークモードの黒地に黒文字になるのを防ぐ */
 select option {
-  background-color: #fff;
-  color: #0f172a;
+  background-color: var(--surface);
+  color: var(--text);
 }
 
 .ghost-btn,
 .danger-btn,
 .file-btn {
-  border: 1px solid #cbd5e1;
-  background: #fff;
+  border: 1px solid var(--border);
+  background: var(--surface);
   padding: 8px 12px;
   border-radius: 10px;
   font-weight: 600;
-  color: #0f172a;
+  color: var(--text);
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .ghost-btn:hover,
 .file-btn:hover {
-  border-color: #0ea5e9;
-  color: #0ea5e9;
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .danger-btn {
@@ -105,9 +105,9 @@ select option {
 .toolbar {
   margin-top: 16px;
   padding: 10px 12px;
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -117,21 +117,21 @@ select option {
 .search {
   flex: 1;
   padding: 10px 12px;
-  border: 1px solid #cbd5e1;
-  border-radius: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
   font-size: 14px;
 }
 
 .gacha-panel {
   margin-top: 16px;
   padding: 12px;
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
   display: flex;
   flex-direction: column;
   gap: 10px;
-  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.03);
+  box-shadow: var(--shadow-xs);
 }
 
 .gacha-head h2 {
@@ -141,7 +141,7 @@ select option {
 
 .gacha-head p {
   margin: 4px 0 0;
-  color: #475569;
+  color: var(--text-muted);
   font-size: 13px;
 }
 
@@ -160,22 +160,22 @@ select option {
   justify-content: space-between;
   align-items: center;
   gap: 8px;
-  border: 1px solid #cbd5e1;
-  border-radius: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
   padding: 10px 12px;
-  background: #f8fafc;
+  background: var(--surface-2);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .gacha-item:hover {
-  border-color: #0ea5e9;
-  box-shadow: 0 6px 16px rgba(14, 165, 233, 0.12);
+  border-color: var(--accent);
+  box-shadow: var(--shadow-sm);
 }
 
 .gacha-name {
   font-weight: 700;
-  color: #0f172a;
+  color: var(--text);
 }
 
 .gacha-meta {
@@ -183,7 +183,7 @@ select option {
   flex-direction: column;
   gap: 2px;
   align-items: flex-end;
-  color: #475569;
+  color: var(--text-muted);
   font-size: 13px;
 }
 
@@ -195,9 +195,9 @@ select option {
 
 .gacha-empty {
   padding: 10px 12px;
-  border: 1px dashed #cbd5e1;
+  border: 1px dashed var(--border);
   border-radius: 10px;
-  color: #475569;
+  color: var(--text-muted);
 }
 
 .gacha-message {
@@ -226,7 +226,7 @@ select option {
   display: flex;
   align-items: center;
   gap: 12px;
-  color: #475569;
+  color: var(--text-muted);
   font-weight: 600;
 }
 
@@ -240,10 +240,10 @@ select option {
 .table-wrap {
   margin-top: 14px;
   overflow: auto;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  background: #fff;
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-xs);
   max-height: 70vh;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
@@ -254,10 +254,10 @@ select option {
   margin-bottom: 6px;
   overflow-x: auto;
   overflow-y: hidden;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
   height: 14px;
-  background: linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%);
+  background: linear-gradient(180deg, var(--surface-2) 0%, var(--border) 100%);
 }
 
 .table-scroll-top::-webkit-scrollbar,
@@ -268,7 +268,7 @@ select option {
 
 .table-scroll-top::-webkit-scrollbar-thumb,
 .table-wrap::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: var(--border);
   border-radius: 999px;
 }
 
@@ -281,13 +281,13 @@ select option {
 .tsum-table th,
 .tsum-table td {
   padding: 10px 12px;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--border);
   text-align: left;
   white-space: nowrap;
 }
 
 .tsum-table th {
-  background: #f1f5f9;
+  background: var(--surface-2);
   position: sticky;
   top: 0;
   z-index: 1;
@@ -298,16 +298,16 @@ select option {
   border: none;
   padding: 0;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--text);
   cursor: pointer;
 }
 
 .tsum-table tbody tr:nth-child(even) {
-  background: #f8fafc;
+  background: var(--surface-2);
 }
 
 .tsum-table tbody tr.row-checked {
-  background: #ecfeff;
+  background: #eff6ff;
 }
 
 .name-col {
@@ -329,15 +329,15 @@ select option {
   border-radius: 999px;
   font-size: 12px;
   font-weight: 700;
-  background: #e2e8f0;
-  color: #0f172a;
+  background: var(--surface-2);
+  color: var(--text);
   border: 1px solid transparent;
 }
 
 .chip-monthly {
-  background: #ecfeff;
-  color: #0284c7;
-  border-color: #bae6fd;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-color: #bfdbfe;
 }
 
 .progress-col {
@@ -348,9 +348,9 @@ select option {
 .tsum-table select {
   width: 120px;
   padding: 6px 8px;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--border);
   border-radius: 8px;
-  background: #fff;
+  background: var(--surface);
 }
 
 .tsum-table input[type="checkbox"] {
@@ -369,7 +369,7 @@ select option {
 
 .summary-note {
   margin: 0 0 8px 0;
-  color: #475569;
+  color: var(--text-muted);
   font-size: 13px;
 }
 
@@ -391,16 +391,16 @@ select option {
   flex-direction: column;
   gap: 6px;
   font-size: 13px;
-  color: #0f172a;
+  color: var(--text);
 }
 
 .premium-goal-field input {
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 8px 10px;
   font-size: 14px;
-  background: #fff;
-  color: #0f172a;
+  background: var(--surface);
+  color: var(--text);
 }
 
 .premium-goal-grid {
@@ -415,22 +415,22 @@ select option {
 }
 
 .premium-goal-card {
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
   padding: 10px 12px;
-  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.03);
+  box-shadow: var(--shadow-xs);
 }
 
 .premium-goal-title {
   font-size: 12px;
-  color: #475569;
+  color: var(--text-muted);
   margin-bottom: 4px;
   font-weight: 700;
 }
 
 .premium-goal-value {
-  color: #0f172a;
+  color: var(--text);
   font-size: 18px;
   font-weight: 700;
 }
@@ -446,40 +446,40 @@ select option {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #475569;
+  color: var(--text-muted);
   font-size: 13px;
   flex-wrap: wrap;
 }
 
 .agg-card {
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
   padding: 12px;
-  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.03);
+  box-shadow: var(--shadow-xs);
 }
 
 .agg-title {
   font-weight: 700;
   margin-bottom: 6px;
-  color: #0f172a;
+  color: var(--text);
 }
 
 .agg-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 6px 10px;
-  color: #475569;
+  color: var(--text-muted);
   font-size: 14px;
 }
 
 .ocr-panel {
   margin-top: 18px;
   padding: 14px;
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.03);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-xs);
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -492,7 +492,7 @@ select option {
 
 .ocr-head p {
   margin: 4px 0 0;
-  color: #475569;
+  color: var(--text-muted);
   font-size: 13px;
 }
 
@@ -515,11 +515,11 @@ select option {
   flex-direction: column;
   gap: 6px;
   font-size: 13px;
-  color: #0f172a;
+  color: var(--text);
 }
 
 .crop-field input {
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 8px;
   font-size: 14px;
@@ -533,10 +533,10 @@ select option {
 
 .ocr-status {
   padding: 10px 12px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  color: #0f172a;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
   font-weight: 600;
 }
 
@@ -555,11 +555,11 @@ select option {
   display: grid;
   grid-template-columns: 280px 1fr;
   gap: 12px;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
   overflow: hidden;
-  background: #fff;
-  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.03);
+  background: var(--surface);
+  box-shadow: var(--shadow-xs);
 }
 
 .ocr-card-unmatched {
@@ -576,19 +576,19 @@ select option {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 10px;
-  background: #f8fafc;
+  background: var(--surface-2);
   padding: 10px;
 }
 
 .ocr-image-wrap {
   position: relative;
-  background: #fff;
+  background: var(--surface);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 10px;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
 }
 
 .ocr-image-label {
@@ -625,12 +625,12 @@ select option {
 
 .ocr-label {
   font-weight: 700;
-  color: #0f172a;
+  color: var(--text);
   font-size: 13px;
 }
 
 .ocr-text-input {
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 8px 10px;
   font-size: 14px;
@@ -654,9 +654,9 @@ select option {
 }
 
 .ocr-tag-match {
-  background: #ecfeff;
-  color: #0284c7;
-  border: 1px solid #bae6fd;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
 }
 
 .ocr-tag-miss {
@@ -666,13 +666,13 @@ select option {
 }
 
 .ocr-tag-skip {
-  background: #f8fafc;
-  color: #475569;
-  border: 1px solid #cbd5e1;
+  background: var(--surface-2);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
 }
 
 .ocr-match-name {
-  color: #0f172a;
+  color: var(--text);
   font-weight: 600;
 }
 
@@ -689,42 +689,42 @@ select option {
 }
 
 .ocr-candidate {
-  border: 1px solid #cbd5e1;
-  border-radius: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
   padding: 8px 10px;
-  background: #f8fafc;
+  background: var(--surface-2);
   text-align: left;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .ocr-candidate:hover {
-  border-color: #0ea5e9;
-  box-shadow: 0 6px 16px rgba(14, 165, 233, 0.12);
+  border-color: var(--accent);
+  box-shadow: var(--shadow-sm);
 }
 
 .ocr-candidate-active {
-  border-color: #0ea5e9;
-  background: #ecfeff;
-  box-shadow: 0 0 0 1px #0ea5e9 inset;
+  border-color: var(--accent);
+  background: #eff6ff;
+  box-shadow: 0 0 0 1px var(--accent) inset;
 }
 
 .ocr-candidate-name {
   display: block;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--text);
 }
 
 .ocr-candidate-meta {
   font-size: 12px;
-  color: #475569;
+  color: var(--text-muted);
 }
 
 .ocr-empty {
   padding: 8px 10px;
-  border: 1px dashed #cbd5e1;
-  border-radius: 10px;
-  color: #475569;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
 }
 
 .ocr-footer {
