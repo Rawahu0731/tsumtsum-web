@@ -730,5 +730,7 @@ export const data: DataRow[] = [
     { name: "スター・ウォーズ　ダークサイド＜セット＞", type: 1, cookieId: 721, needs: [1, 1, 2, 4, 8, 20], defaultOwned: 0 },
     { name: "モフ・ギデオン", type: 1, cookieId: 722, needs: [1, 1, 2, 4, 8, 16], defaultOwned: 0 },
     { name: "ガーディアンルーク", type: 1, cookieId: 723, needs: [1, 1, 2, 4, 8, 20], defaultOwned: 0 },
+    { name: "マンダロリアン＋", type: 5, cookieId: 724, needs: [1, 1, 2, 4, 8, 20], defaultOwned: 0 },
+    { name: "グローグー＋", type: 5, cookieId: 725, needs: [1, 1, 2, 4, 8, 20], defaultOwned: 0 },
 
 ];
