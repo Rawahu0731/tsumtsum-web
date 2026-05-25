@@ -7,7 +7,9 @@ import { createLocalTesseractWorker, type TesseractWorker } from '../utils/tesse
 const MONTHLY_NEW_NAMES = new Set([
 	'スター・ウォーズ　ダークサイド＜セット＞',
 	'モフ・ギデオン',
-	'ガーディアンルーク'
+	'ガーディアンルーク',
+	'マンダロリアン＋',
+	'グローグー＋'
 ]);
 
 type TsumRow = {
