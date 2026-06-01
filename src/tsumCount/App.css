@@ -578,6 +578,7 @@ select option {
   gap: 10px;
   background: var(--surface-2);
   padding: 10px;
+  justify-items: center;
 }
 
 .ocr-image-wrap {
@@ -611,16 +612,19 @@ select option {
 }
 
 .ocr-body {
-  padding: 12px 12px 14px 0;
+  padding: 12px;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  align-items: center;
+  text-align: center;
 }
 
 .ocr-row {
   display: flex;
   flex-direction: column;
   gap: 6px;
+  align-items: center;
 }
 
 .ocr-label {
@@ -641,6 +645,7 @@ select option {
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
+  justify-content: center;
 }
 
 .ocr-tag {
@@ -686,6 +691,7 @@ select option {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 8px;
+  justify-items: center;
 }
 
 .ocr-candidate {
@@ -693,7 +699,7 @@ select option {
   border-radius: var(--radius-sm);
   padding: 8px 10px;
   background: var(--surface-2);
-  text-align: left;
+  text-align: center;
   cursor: pointer;
   transition: all 0.15s ease;
 }
@@ -729,7 +735,7 @@ select option {
 
 .ocr-footer {
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
 }
 
 .ocr-log-panel {
