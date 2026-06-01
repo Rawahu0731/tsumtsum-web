@@ -549,21 +549,17 @@ select option {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  align-items: center;
 }
 
 .ocr-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  display: grid;
+  grid-template-columns: 280px 1fr;
   gap: 12px;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   overflow: hidden;
   background: var(--surface);
   box-shadow: var(--shadow-xs);
-  width: min(100%, 980px);
-  margin: 0 auto;
 }
 
 .ocr-card-unmatched {
@@ -578,13 +574,11 @@ select option {
 
 .ocr-image-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 220px));
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 10px;
   background: var(--surface-2);
   padding: 10px;
-  width: 100%;
   justify-items: center;
-  justify-content: center;
 }
 
 .ocr-image-wrap {
@@ -618,21 +612,16 @@ select option {
 }
 
 .ocr-body {
-  width: min(100%, 760px);
-  padding: 12px;
+  padding: 12px 12px 14px 0;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  align-items: center;
-  text-align: center;
 }
 
 .ocr-row {
-  width: 100%;
   display: flex;
   flex-direction: column;
   gap: 6px;
-  align-items: center;
 }
 
 .ocr-label {
@@ -646,8 +635,6 @@ select option {
   border-radius: 8px;
   padding: 8px 10px;
   font-size: 14px;
-  width: 100%;
-  box-sizing: border-box;
 }
 
 .ocr-match-row {
@@ -655,7 +642,6 @@ select option {
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
-  justify-content: center;
 }
 
 .ocr-tag {
@@ -701,8 +687,6 @@ select option {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 8px;
-  width: 100%;
-  justify-items: center;
 }
 
 .ocr-candidate {
@@ -710,10 +694,9 @@ select option {
   border-radius: var(--radius-sm);
   padding: 8px 10px;
   background: var(--surface-2);
-  text-align: center;
+  text-align: left;
   cursor: pointer;
   transition: all 0.15s ease;
-  width: 100%;
 }
 
 .ocr-candidate:hover {
@@ -747,7 +730,7 @@ select option {
 
 .ocr-footer {
   display: flex;
-  justify-content: center;
+  justify-content: flex-end;
 }
 
 .ocr-log-panel {
@@ -843,8 +826,8 @@ select option {
     grid-template-columns: 1fr;
   }
 
-  .ocr-body {
-    width: min(100%, 100%);
+  .ocr-card {
+    grid-template-columns: 1fr;
   }
 
   .ocr-candidates {
