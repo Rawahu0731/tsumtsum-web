@@ -15,31 +15,33 @@ export default function ConfirmModal({ open, title = '確認', message, previewU
     return (
         <div style={overlayStyle} role="dialog" aria-modal="true" aria-label={title}>
             <div style={modalStyle}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                <div style={{ width: '100%', textAlign: 'center', marginBottom: 8 }}>
                     <h3 style={{ margin: 0, fontSize: 18, color: '#111827' }}>{title}</h3>
                 </div>
 
-                <div style={{ color: '#374151', fontSize: 15, marginBottom: 12 }}>{message}</div>
+                <div style={{ color: '#374151', fontSize: 15, marginBottom: 12, width: '100%', textAlign: 'center' }}>{message}</div>
 
                 {previewUrl && (
-                    <div style={{ textAlign: 'center', marginBottom: 12 }}>
+                    <div style={{ width: '100%', display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
                         <img
                             src={previewUrl}
                             alt="preview"
                             style={{
+                                display: 'block',
                                 maxWidth: '100%',
                                 maxHeight: '50vh',
                                 width: 'auto',
                                 height: 'auto',
                                 objectFit: 'contain',
                                 borderRadius: 8,
-                                boxShadow: '0 2px 6px rgba(0,0,0,0.08)'
+                                boxShadow: '0 2px 6px rgba(0,0,0,0.08)',
+                                margin: '0 auto'
                             }}
                         />
                     </div>
                 )}
 
-                <div style={{ display: 'flex', gap: 8 }}>
+                <div style={{ display: 'flex', gap: 8, width: '100%' }}>
                     <button onClick={onCancel} style={cancelButtonStyle}>キャンセル</button>
                     <button onClick={onConfirm} style={confirmButtonStyle}>この値を入力する</button>
                 </div>
@@ -69,6 +71,10 @@ const modalStyle: React.CSSProperties = {
     border: '1px solid #e6eef8',
     maxHeight: '80vh',
     overflowY: 'auto',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    textAlign: 'center',
 };
 
 const confirmButtonStyle: React.CSSProperties = {
@@ -80,9 +86,11 @@ const confirmButtonStyle: React.CSSProperties = {
     borderRadius: 10,
     fontWeight: 600,
     cursor: 'pointer',
+    minWidth: 0,
 };
 
 const cancelButtonStyle: React.CSSProperties = {
+    flex: 1,
     padding: '12px 14px',
     background: '#fff',
     color: '#374151',
@@ -90,4 +98,5 @@ const cancelButtonStyle: React.CSSProperties = {
     borderRadius: 10,
     cursor: 'pointer',
     fontWeight: 600,
+    minWidth: 0,
 };
