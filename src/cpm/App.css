@@ -22,11 +22,11 @@
   left: 50%;
   bottom: calc(64px + env(safe-area-inset-bottom));
   transform: translateX(-50%);
-  z-index: 10;
+  z-index: 120;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
-  padding: 12px;
+  padding: 8px;
   width: min(980px, calc(100% - 24px));
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.9);
@@ -40,7 +40,7 @@
   flex-direction: column;
   gap: 4px;
   align-items: center;
-  padding: 12px 8px;
+  padding: 8px 6px;
   border-radius: 12px;
   color: var(--c-text-tertiary);
   border: 1px solid transparent;
@@ -55,12 +55,12 @@
 }
 
 .tab-label {
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   font-weight: 700;
 }
 
 .tab-sub {
-  font-size: 0.7rem;
+  font-size: 0.6rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
@@ -94,6 +94,20 @@
   color: var(--c-text-secondary);
 }
 
+.measure-identity {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--c-text-secondary);
+  font-size: 0.95rem;
+}
+
+.measure-identity strong {
+  color: var(--c-text-primary);
+  font-size: 1rem;
+}
+
 .measure-stats {
   display: grid;
   grid-template-columns: repeat(3, minmax(120px, 1fr));
@@ -120,6 +134,19 @@
   display: block;
   font-size: 1.3rem;
   margin-top: 6px;
+}
+
+.measure-stats-collapse {
+  background: #ffffff;
+  border: 1px solid var(--c-border);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.measure-stats-collapse summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--c-text-secondary);
 }
 
 .session-setup,
@@ -167,6 +194,7 @@ select {
 .items-block {
   margin-top: 16px;
 }
+
 
 .items-title {
   font-size: 0.75rem;
@@ -325,7 +353,6 @@ select {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-top: 10px;
 }
 
 .coin-input {
@@ -340,8 +367,6 @@ select {
 }
 
 .save-bar {
-  position: sticky;
-  bottom: 12px;
   margin-top: 12px;
   display: flex;
   flex-direction: column;
@@ -357,6 +382,14 @@ select {
   width: 100%;
   font-size: 1.2rem;
   padding: 16px 18px;
+}
+
+.only-desktop {
+  display: block;
+}
+
+.only-mobile {
+  display: none;
 }
 
 .save-meta {
@@ -454,6 +487,12 @@ select {
   padding: 16px;
   border: 1px solid var(--c-border);
   box-shadow: 0 8px 18px var(--c-shadow);
+}
+
+.card-terminal {
+  margin-top: 6px;
+  font-size: 0.85rem;
+  color: var(--c-text-secondary);
 }
 
 .rank-badge {
@@ -566,6 +605,34 @@ select {
   box-shadow: 0 8px 24px rgba(37, 99, 235, 0.18);
 }
 
+.condition-card {
+  background: #ffffff;
+  border: 1px solid var(--c-border);
+  border-radius: 16px;
+  padding: 14px;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 6px 16px var(--c-shadow);
+}
+
+.condition-card.active {
+  border-color: var(--c-accent);
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.18);
+}
+
+.condition-card-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.condition-terminal {
+  font-size: 0.8rem;
+  color: var(--c-text-secondary);
+  margin-top: 6px;
+}
+
 .session-card-main {
   display: flex;
   justify-content: space-between;
@@ -623,6 +690,30 @@ select {
   border: 1px solid var(--c-border);
   padding: 18px;
   box-shadow: 0 8px 24px var(--c-shadow);
+}
+
+.condition-detail {
+  background: #ffffff;
+  border-radius: 18px;
+  border: 1px solid var(--c-border);
+  padding: 18px;
+  box-shadow: 0 8px 24px var(--c-shadow);
+}
+
+.condition-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.condition-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+  color: var(--c-text-secondary);
+  font-size: 0.85rem;
 }
 
 .session-detail-sub {
@@ -699,8 +790,9 @@ select {
   }
 
   .tab-bar {
-    bottom: calc(64px + env(safe-area-inset-bottom));
+    bottom: var(--app-tabbar-total);
   }
+
 
   .measure-hero {
     flex-direction: column;
@@ -710,12 +802,25 @@ select {
     grid-template-columns: repeat(2, 1fr);
   }
 
+  .only-desktop {
+    display: none;
+  }
+
+  .only-mobile {
+    display: block;
+  }
+
   .items-grid {
     grid-template-columns: repeat(3, 1fr);
   }
 
   .stopwatch-display {
     font-size: 3.6rem;
+  }
+
+  .save-bar {
+    position: sticky;
+    bottom: 12px;
   }
 
   .save-meta {
@@ -755,7 +860,18 @@ select {
     bottom: auto;
     left: auto;
     transform: none;
-    width: auto;
-    margin: 0;
+    width: 100vw;
+    margin: 0 0 0 calc(50% - 50vw);
+    background: #ffffff;
+    backdrop-filter: none;
+    border-radius: 0 0 16px 16px;
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+  }
+
+  .tab-bar .tab-btn {
+    min-width: 120px;
+    max-width: 220px;
   }
 }

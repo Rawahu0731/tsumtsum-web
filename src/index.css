@@ -32,6 +32,8 @@
   --radius-md: 12px;
   --radius-sm: 10px;
   --ring: 0 0 0 3px rgba(29, 78, 216, 0.2);
+  --app-tabbar-safe: max(8px, env(safe-area-inset-bottom));
+  --app-tabbar-total: calc(64px + 8px + var(--app-tabbar-safe));
 
   /* Mobile friendly base settings */
   touch-action: manipulation;
