@@ -733,5 +733,7 @@ export const data: DataRow[] = [
     { name: "マンダロリアン＋", type: 5, cookieId: 724, needs: [1, 1, 2, 4, 8, 20], defaultOwned: 0 },
     { name: "グローグー＋", type: 5, cookieId: 725, needs: [1, 1, 2, 4, 8, 20], defaultOwned: 0 },
     { name: "ヒーロースタイルスティッチ＜変身＞", type: 1, cookieId: 726, needs: [1, 1, 2, 4, 8, 20], defaultOwned: 0 },
-    { name: "ダグ", type: 0, cookieId: 727, needs: [1, 1, 2, 4, 8, 20], defaultOwned: 0 },
+    { name: "ダグ", type: 0, cookieId: 727, needs: [1, 1, 2, 4, 8, 16], defaultOwned: 0 },
+    { name: "変身の達人マウイ", type: 0, cookieId: 728, needs: [1, 1, 2, 4, 8, 20], defaultOwned: 0 },
+    { name: "ジム・ホーキンス", type: 0, cookieId: 729, needs: [1, 1, 2, 4, 8, 16], defaultOwned: 0 },
 ];
