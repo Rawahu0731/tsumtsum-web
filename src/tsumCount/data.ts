@@ -736,4 +736,11 @@ export const data: DataRow[] = [
     { name: "ダグ", type: 0, cookieId: 727, needs: [1, 1, 2, 4, 8, 16], defaultOwned: 0 },
     { name: "変身の達人マウイ", type: 0, cookieId: 728, needs: [1, 1, 2, 4, 8, 20], defaultOwned: 0 },
     { name: "ジム・ホーキンス", type: 0, cookieId: 729, needs: [1, 1, 2, 4, 8, 16], defaultOwned: 0 },
+    { name: "リリア・ヴァンルージュ", type: 0, cookieId: 730, needs: [1, 1, 2, 4, 8, 20], defaultOwned: 0 },
+    { name: "セベク・ジグボルト", type: 0, cookieId: 731, needs: [1, 1, 2, 4, 8, 16], defaultOwned: 0 },
+    { name: "シルバー", type: 0, cookieId: 732, needs: [1, 1, 2, 4, 8, 16], defaultOwned: 0 },
+    { name: "トレイ・クローバー", type: 0, cookieId: 733, needs: [1, 1, 2, 4, 8, 16], defaultOwned: 0 },
+    { name: "ケイト・ダイヤモンド", type: 0, cookieId: 734, needs: [1, 1, 2, 4, 8, 16], defaultOwned: 0 },
+    { name: "ジェシー＋", type: 0, cookieId: 735, needs: [1, 1, 2, 4, 8, 20], defaultOwned: 0 },
+    
 ];
