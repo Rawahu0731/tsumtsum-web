@@ -754,9 +754,9 @@ export const data: DataRow[] = [
     { name: "修理工フェリックス", type: 1, cookieId: 745, needs: [1, 1, 2, 4, 7, 14], defaultOwned: 0 },
     { name: "カルホーン軍曹", type: 1, cookieId: 746, needs: [1, 1, 2, 4, 8, 16], defaultOwned: 0 },
     { name: "マリー＋", type: 5, cookieId: 747, needs: [1, 1, 2, 4, 8, 20], defaultOwned: 0 },
-    { name: "新つむ１", type: 1, cookieId: 748, needs: [1, 1, 2, 4, 8, 20], defaultOwned: 0 },
-    { name: "新つむ２", type: 1, cookieId: 749, needs: [1, 1, 2, 4, 8, 20], defaultOwned: 0 },
-    { name: "新つむ３", type: 1, cookieId: 750, needs: [1, 1, 2, 4, 9, 20], defaultOwned: 0 },
+    { name: "ナイトメアー・ビフォア・クリスマス＜セット＞", type: 1, cookieId: 748, needs: [1, 1, 2, 4, 8, 20], defaultOwned: 0 },
+    { name: "フィンケルスタイン博士", type: 1, cookieId: 749, needs: [1, 1, 2, 4, 7, 14], defaultOwned: 0 },
+    { name: "新つむ３", type: 1, cookieId: 750, needs: [1, 1, 2, 4, 8, 20], defaultOwned: 0 },
     { name: "新つむ４", type: 1, cookieId: 751, needs: [1, 1, 2, 4, 8, 20], defaultOwned: 0 },
     { name: "新つむ５", type: 5, cookieId: 752, needs: [1, 1, 2, 4, 8, 20], defaultOwned: 0 },
 ];

@@ -5,8 +5,8 @@ import { data as sourceData } from './data';
 import { createLocalTesseractWorker, type TesseractWorker } from '../utils/tesseractWorker';
 
 const MONTHLY_NEW_NAMES = new Set([
-	'新つむ１',
-	'新つむ２',
+	'ナイトメアー・ビフォア・クリスマス＜セット＞',
+	'フィンケルスタイン博士',
 	'新つむ３',
 	'新つむ４',
 	'新つむ５',
