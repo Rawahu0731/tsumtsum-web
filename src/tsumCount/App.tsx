@@ -7,9 +7,9 @@ import { createLocalTesseractWorker, type TesseractWorker } from '../utils/tesse
 const MONTHLY_NEW_NAMES = new Set([
 	'ナイトメアー・ビフォア・クリスマス＜セット＞',
 	'フィンケルスタイン博士',
-	'新つむ３',
-	'新つむ４',
-	'新つむ５',
+	'マダム・レオタ',
+	'コンスタンス＜チャーム＞',
+	'ダンボ＋',
 ]);
 
 type TsumRow = {

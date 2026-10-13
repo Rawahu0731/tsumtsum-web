@@ -756,7 +756,7 @@ export const data: DataRow[] = [
     { name: "マリー＋", type: 5, cookieId: 747, needs: [1, 1, 2, 4, 8, 20], defaultOwned: 0 },
     { name: "ナイトメアー・ビフォア・クリスマス＜セット＞", type: 1, cookieId: 748, needs: [1, 1, 2, 4, 8, 20], defaultOwned: 0 },
     { name: "フィンケルスタイン博士", type: 1, cookieId: 749, needs: [1, 1, 2, 4, 7, 14], defaultOwned: 0 },
-    { name: "新つむ３", type: 1, cookieId: 750, needs: [1, 1, 2, 4, 8, 20], defaultOwned: 0 },
-    { name: "新つむ４", type: 1, cookieId: 751, needs: [1, 1, 2, 4, 8, 20], defaultOwned: 0 },
-    { name: "新つむ５", type: 5, cookieId: 752, needs: [1, 1, 2, 4, 8, 20], defaultOwned: 0 },
+    { name: "マダム・レオタ", type: 1, cookieId: 750, needs: [1, 1, 2, 4, 8, 16], defaultOwned: 0 },
+    { name: "コンスタンス＜チャーム＞", type: 1, cookieId: 751, needs: [1, 1, 2, 4, 8, 16], defaultOwned: 0 },
+    { name: "ダンボ＋", type: 5, cookieId: 752, needs: [1, 1, 2, 4, 8, 20], defaultOwned: 0 },
 ];
