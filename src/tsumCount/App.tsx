@@ -9,7 +9,6 @@ const MONTHLY_NEW_NAMES = new Set([
 	'フィンケルスタイン博士',
 	'マダム・レオタ',
 	'コンスタンス＜チャーム＞',
-	'ダンボ＋',
 ]);
 
 type TsumRow = {
