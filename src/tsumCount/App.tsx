@@ -699,7 +699,7 @@ export default function TsumCountApp() {
 		() => Math.max(0, premiumAggregate.coinCost - walletPreviousDayCoin),
 		[premiumAggregate.coinCost, walletPreviousDayCoin],
 	);
-	const isPremiumSoldOut = premiumCoinsToEarn === 0;
+	const isPremiumSoldOut = premiumAggregate.coinCost === 0;
 	const wasPremiumSoldOutRef = useRef(isPremiumSoldOut);
 	const premiumGoalPlan = useMemo<PremiumGoalPlan | null>(() => {
 		const targetDate = parseInputDate(premiumGoalDate);
