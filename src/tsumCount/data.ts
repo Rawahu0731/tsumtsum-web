@@ -759,4 +759,6 @@ export const data: DataRow[] = [
     { name: "マダム・レオタ", type: 1, cookieId: 750, needs: [1, 1, 2, 4, 8, 16], defaultOwned: 0 },
     { name: "コンスタンス＜チャーム＞", type: 1, cookieId: 751, needs: [1, 1, 2, 4, 8, 16], defaultOwned: 0 },
     { name: "ダンボ＋", type: 5, cookieId: 752, needs: [1, 1, 2, 4, 8, 20], defaultOwned: 0 },
+    { name: "ロルカナウッディ＜変身＞", type: 1, cookieId: 753, needs: [1, 1, 2, 4, 8, 20], defaultOwned: 0 },
+    { name: "ロルカナクルエラ", type: 1, cookieId: 754, needs: [1, 1, 2, 4, 8, 16], defaultOwned: 0 },
 ];

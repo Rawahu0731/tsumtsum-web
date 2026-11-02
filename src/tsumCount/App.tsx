@@ -4,12 +4,7 @@ import CompleteAnimation from './components/CompleteAnimation';
 import { data as sourceData } from './data';
 import { createLocalTesseractWorker, type TesseractWorker } from '../utils/tesseractWorker';
 
-const MONTHLY_NEW_NAMES = new Set([
-	'ナイトメアー・ビフォア・クリスマス＜セット＞',
-	'フィンケルスタイン博士',
-	'マダム・レオタ',
-	'コンスタンス＜チャーム＞',
-]);
+const MONTHLY_NEW_COOKIE_IDS = new Set<number>([753, 754]);
 
 type TsumRow = {
 	no: number;
@@ -172,7 +167,7 @@ function parseData(): TsumRow[] {
 		const cookieId = Number(row.cookieId ?? idx + 1);
 		const isMedal = MEDAL_TYPES.has(type);
 		const unitCost = SPECIAL_MEDAL_IDS.has(cookieId) ? 12850 : isMedal ? 10000 : 30000;
-		const isMonthlyNew = MONTHLY_NEW_NAMES.has(row.name);
+		const isMonthlyNew = MONTHLY_NEW_COOKIE_IDS.has(cookieId);
 
 		return {
 			no: idx + 1,
@@ -654,7 +649,10 @@ export default function TsumCountApp() {
 	}, [enrichedRows, filter, sortDir, sortKey, typeFilter]);
 
 	const selectedRows = filtered.filter((r) => r.checked);
-	const monthlyNewList = useMemo(() => Array.from(MONTHLY_NEW_NAMES), []);
+	const monthlyNewList = useMemo(
+		() => enrichedRows.filter((row) => row.isMonthlyNew).map((row) => row.name),
+		[enrichedRows],
+	);
 
 	const levelChoices = useMemo(() => {
 		const map: Record<number, number[]> = {};
